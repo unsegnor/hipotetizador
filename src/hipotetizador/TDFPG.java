@@ -64,6 +64,21 @@ public class TDFPG {
             //Aquí ya tenemos los elementos que vamos a analizar
             System.out.println("Elementos que vamos a analizar");
             System.out.println(showarray(elementos));
+            
+            //Antes de continuar tenemos que filtrarlos para quedarnos sólo con los que aparezcan en el ranking
+            //que serán aquellos que han superado el soporte mínimo
+            //TODO esto hay que cambiarlo... podríamos referenciarlos al encontrarlos arriba y ya sólo utilizar su índice
+            
+            ArrayList<Elemento> filtrados = new ArrayList<>();
+            
+            for(Elemento e:ranking){
+                if(elementos.contains(e)){
+                    filtrados.add(e);
+                }
+            }
+            
+            //Creo que aquí están filtrados y ordenados
+            
             //Tenemos que ordenarlos y construir el árbol
 
             //Ordenar de mayor a menor soporte según la tabla que antes hemos calculado
@@ -71,7 +86,7 @@ public class TDFPG {
 
 
             //Recorrer la tabla de ranking y ordenar igual
-            ArrayList<Elemento> ordenados = new ArrayList<>();
+            ArrayList<Elemento> ordenados = filtrados;//new ArrayList<>();
 
             //Mientras la lista de ordenados sea menor que la de elementos, nos faltan por ordenar
             //int rc =0; //Elemento del ranking que estamos buscando
@@ -82,20 +97,20 @@ public class TDFPG {
 
 
             //Generamos el comparador con el ranking
-            CompElemList comp = new CompElemList(ranking);
+            //CompElemList comp = new CompElemList(ranking);
 
             //Ordenamos la lista de elementos según el comparador
-            Collections.sort(elementos, comp);
+            //Collections.sort(elementos, comp);
 
             System.out.println("Elementos que vamos a analizar ordenados");
-            System.out.println(showarray(elementos));
+            System.out.println(showarray(ordenados));
 
             //Almacenar los índices para acceder más rápido a los registrosTD
             //Ya tenemos la lista de elementos ordenados
             //Ahora a recorrerlos en orden y construir el árbol
 
             Nodo nodo_actual = padre;
-            for (Elemento elem : elementos) {
+            for (Elemento elem : ordenados) {
                 //Tenemos que generar una rama de este conjunto
                 //Buscamos un hijo del padre que sea igual que el nodo actual
 

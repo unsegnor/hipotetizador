@@ -59,7 +59,7 @@ public class Hipotetizador {
             muestra[i] = false;
         }
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
 
             //Generar muestra
             muestra = Muestras.masuno_binario(muestra);

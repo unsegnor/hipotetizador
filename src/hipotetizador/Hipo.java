@@ -43,7 +43,7 @@ import java.util.Set;
 public class Hipo {
 
     int tventana = 3;
-    int thistoria = 100;//Integer.MAX_VALUE-1;
+    int thistoria = 1000;//Integer.MAX_VALUE-1;
     //Memoria a corto plazo
     boolean[][] ventana;
     //Memoria a medio plazo
@@ -98,7 +98,7 @@ public class Hipo {
 
             //Ejecutamos el algoritmo para extraer las reglas
             //deducir_reglas();
-            this.TopDown();
+            this.TopDown(0.51f);//indicamos el umbral
 
             //Reiniciar memorias a corto y medio plazo
             reiniciar_memorias();
@@ -108,10 +108,8 @@ public class Hipo {
     }
 
     private void reiniciar_memorias() {
-
         //Limpiar los k-itemsets
         //itemsets.clear();
-
     }
 
     private void anotar(int i, boolean[] muestra) {
@@ -177,35 +175,35 @@ public class Hipo {
             //Comprobamos si el kitemset ya está calculado
             itemset = itemsets.get(k);
             //Si no está lo calculamos
-            if(itemset == null){
+            if (itemset == null) {
                 //Obtenemos el (k-1)-itemset
-                HashSet<HashSet<Elemento> > itemsetanterior = this.obtener_k_itemsets(k-1, frecuencia_umbral);
-                
+                HashSet<HashSet<Elemento>> itemsetanterior = this.obtener_k_itemsets(k - 1, frecuencia_umbral);
+
                 //Componer el nivel k a partir del anterior
                 //Componer todas las combinaciones que existen
-                
+
                 /*  Realizar función tal que AB+BC+AC = ABC 
-                *   AB+BC = nada
-                *   ABC+ABD+ACD+BCD = ABCD
-                *   Deben aparecer todas las permutaciones posibles del resultado para que sea válido
-                *   AB -> es posible ABC, ABD, ABE...
-                *   AE -> es más posible ABE
-                *   BE -> ahora sí es posible ABE
-                * 
-                *   Parce fácil comprobar cuales de las posibles son realmente
-                *   Cómo construir a partir de las que existen las posibles de una sola pasada.
-                * 
-                */
-                
+                 *   AB+BC = nada
+                 *   ABC+ABD+ACD+BCD = ABCD
+                 *   Deben aparecer todas las permutaciones posibles del resultado para que sea válido
+                 *   AB -> es posible ABC, ABD, ABE...
+                 *   AE -> es más posible ABE
+                 *   BE -> ahora sí es posible ABE
+                 * 
+                 *   Parce fácil comprobar cuales de las posibles son realmente
+                 *   Cómo construir a partir de las que existen las posibles de una sola pasada.
+                 * 
+                 */
+
                 //Componer ABC si existen AB, BC y AC
                 //Componer ABCD si existen ABC, ABD, ACD, BCD
-                
+
                 //TODO: Hacer Top Down Frequent Pattern Growth
-                
-                
+
+
                 //Desechar las que no valen
-                
-                
+
+
                 //Lo añadimos al diccionario
                 itemsets.put(k, itemset);
             }
@@ -215,38 +213,46 @@ public class Hipo {
 
         return itemset;
     }
-    
-    private void TopDown(){
+
+    private void TopDown(float umbral) {
         //Leer la historia y elaborar la tabla de frecuencias
-        ArrayList<InfoElemento> tabla= new ArrayList<>();
-       for (int i = 0; i < cuentas.length; i++) {
-                    for (int j = 0; j < cuentas[i].length; j++) {
-                        Par<Long, Long> par = cuentas[i][j];
-                        Elemento verdadero = new Elemento();
-                            //Si la frecuencia es mayor lo añadimos al conjunto
-                            verdadero.entrada = i;
-                            verdadero.subindice = j;
-                            verdadero.verdadero = true;
-                        InfoElemento infov = new InfoElemento();
-                            infov.setElemento(verdadero);
-                            infov.setApariciones(par.getPrimero());
-                            infov.setTotal(par.getSegundo());
-                        tabla.add(infov);
-                        Elemento falso = new Elemento();    
-                            falso.entrada = i;
-                            falso.subindice = j;
-                            falso.verdadero = false;
-                        InfoElemento infof = new InfoElemento();
-                            infof.setElemento(falso);
-                            infof.setApariciones(par.getSegundo()-par.getPrimero());
-                            infof.setTotal(par.getSegundo());
-                        tabla.add(infof);
-                    }
+        ArrayList<InfoElemento> tabla = new ArrayList<>();
+        for (int i = 0; i < cuentas.length; i++) {
+            for (int j = 0; j < cuentas[i].length; j++) {
+                Par<Long, Long> par = cuentas[i][j];
+                long apariciones = par.getPrimero();
+                long total = par.getSegundo();
+                long ausencias = total - apariciones;
+                Elemento verdadero = new Elemento();
+                //Si la frecuencia es mayor lo añadimos al conjunto
+                if ((float)apariciones/(float)total > umbral) {
+                    verdadero.entrada = i;
+                    verdadero.subindice = j;
+                    verdadero.verdadero = true;
+                    InfoElemento infov = new InfoElemento();
+                    infov.setElemento(verdadero);
+                    infov.setApariciones(apariciones);
+                    infov.setTotal(total);
+                    tabla.add(infov);
                 }
-       
-       //Ejecutar TopDown con la lista
-       TDFPG td = new TDFPG();
-       td.ejecutar(tabla,historia,tventana);
+
+                if ((float)ausencias/(float)total > umbral) {
+                    Elemento falso = new Elemento();
+                    falso.entrada = i;
+                    falso.subindice = j;
+                    falso.verdadero = false;
+                    InfoElemento infof = new InfoElemento();
+                    infof.setElemento(falso);
+                    infof.setApariciones(ausencias);
+                    infof.setTotal(total);
+                    tabla.add(infof);
+                }
+            }
+        }
+
+        //Ejecutar TopDown con la lista
+        TDFPG td = new TDFPG();
+        td.ejecutar(tabla, historia, tventana);
     }
 
     private HashSet<HashSet<Elemento>> cartesiano(Set<Elemento> A, Set<Elemento> B) {
@@ -277,7 +283,7 @@ public class Hipo {
         System.out.println(imprimir_cuentas());
 
         //Obtener 1itemset
-        HashSet<HashSet<Elemento> > uno_itemset = this.obtener_k_itemsets(1, 0.8);
+        HashSet<HashSet<Elemento>> uno_itemset = this.obtener_k_itemsets(1, 0.8);
 
         //Imprimir 1-itemset
         System.out.println("1-Itemset-------------------------------------------");

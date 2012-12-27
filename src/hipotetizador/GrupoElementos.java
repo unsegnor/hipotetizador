@@ -53,7 +53,7 @@ public class GrupoElementos {
             }
             //Eliminar el último espacio
             sb.deleteCharAt(sb.length()-1);
-        sb.append("] -> ");
+        sb.append("]:");
         sb.append(this.getSoporte());
         return sb.toString();
     }
