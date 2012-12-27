@@ -5,7 +5,9 @@
 package hipotetizador;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * Top Down Frequent Pattern Growth
@@ -49,7 +51,7 @@ public class TDFPG {
 
             ArrayList<Elemento> elementos = new ArrayList<>(); //Elementos de la ventana
             for (int e = 0; e < historia[i].length; e++) {
-                for (int v = 0; v < tventana && (i + v < historia[i].length); v++) {
+                for (int v = 0; v < tventana && (i + v < historia.length); v++) {
                     if (historia[i + v][e]) {
                         //Si el elemento es positivo entonces lo anotamos como positivo
                         elementos.add(new Elemento(e, v, true));
@@ -145,17 +147,69 @@ public class TDFPG {
 
         }
         //Aquí deberíamos tener el árbol construido
-        System.out.println("Arbol contruido");
+        System.out.println("Arbol construido");
         System.out.println(imprimir_arbol(padre, " ", true));
 
 
         //A partir de aquí hay que empezar a formar los grupos desde abajo
         //Recorremos la tabla en orden inverso y vamos extrayendo subconjuntos a la vez que restamos uno a las frecuencias
-        
+
+        ArrayList<HashSet<Elemento>> grupos = new ArrayList<>();
+
+        for (int r = tabla.size() - 1; r >= 0; r--) {
+            RegistroTD reg = tabla.get(r);
+            Nodo atratar = reg.getNodo();
+
+            while (atratar != null) { //Hasta que se acabe la lista
+                //De quí saldrá un grupo nuevo
+                HashSet<Elemento> grupo = new HashSet<>();
+                Nodo n_anotar = atratar;
+
+                //Sólo seguimos si la frecuencia del nodo es mayor que cero
+                if (n_anotar.getFreq() > 0) {
+
+                    Elemento e_anotar = n_anotar.getElemento();
+                    while (e_anotar != null) { //Hasta que lleguemos al nodo raíz cuyo elemento es null
+                        grupo.add(e_anotar); //Añadimos el elemento al grupo
+                        n_anotar.setFreq(n_anotar.getFreq() - 1); //Restamos uno a la frecuencia
+                        n_anotar = n_anotar.getPadre(); //Nos movemos al nodo padre
+                        e_anotar = n_anotar.getElemento(); //Accedemos a su elemento
+                    }
+
+
+                    //Aquí ya tenemos el grupo relleno
+                    grupos.add(grupo); //Lo añadimos a la lista de grupos
+                }
+                atratar = atratar.getSiguiente();
+            }
+        }
+            //Aquí deberíamos tener la lista de grupos frecuentes
+            System.out.append("Lista de grupos frecuentes\n");
+            System.out.println(imprime(grupos));
 
 
 
         return reglas;
+    }
+
+    public String imprime(HashSet<Elemento> c) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        for (Elemento e : c) {
+            sb.append(e).append(" ");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    public String imprime(ArrayList<HashSet<Elemento>> c) {
+        StringBuilder sb = new StringBuilder();
+
+        for (HashSet<Elemento> e : c) {
+            sb.append(imprime(e)).append("\n");
+        }
+
+        return sb.toString();
     }
 
     public String imprimir_arbol(Nodo padre, String historia, boolean ultimo) {
@@ -168,15 +222,25 @@ public class TDFPG {
         if (ultimo) {
             int l = historia.length();
             if (l > 0) {
-                sb.append(historia.substring(0, l-1));
+                sb.append(historia.substring(0, l - 1));
             }
-            sb.append("|");
+            sb.append((char) 9562); //Símbolo que indica que es el último hijo
 
         } else {
-            sb.append(historia);
+            int l = historia.length();
+            if (l > 0) {
+                sb.append(historia.substring(0, l - 1));
+            }
+            sb.append((char) 9568);
         }
 
-        sb.append("_").append(padre.getElemento()).append(" ").append(padre.getFreq()).append("\n");
+        if (padre.getHijos().size() > 0) {
+            sb.append((char) 9574); //Símbolo que indica que tiene hijos
+        } else {
+            sb.append((char) 9552); //Símbolo que indica que no tiene hijos
+        }
+
+        sb.append(padre.getElemento()).append(" ").append(padre.getFreq()).append("\n");
 
 
         //Guardamos la historia que nos viene dada
@@ -190,7 +254,7 @@ public class TDFPG {
             if (i == hijos.size() - 1) {
                 sb.append(imprimir_arbol(hijos.get(i), historia + " ", true));
             } else {
-                sb.append(imprimir_arbol(hijos.get(i), historia + "|", false));
+                sb.append(imprimir_arbol(hijos.get(i), historia + (char) 9553, false));
             }
         }
         return sb.toString();
