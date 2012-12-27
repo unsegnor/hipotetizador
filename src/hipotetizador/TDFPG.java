@@ -29,7 +29,7 @@ public class TDFPG {
         for (RegistroTD r : tabla) {
             ranking.add(r.getElemento());
         }
-        
+
         //Creamos el nodo raíz del árbol
         Nodo padre = new Nodo();
 
@@ -49,7 +49,7 @@ public class TDFPG {
 
             ArrayList<Elemento> elementos = new ArrayList<>(); //Elementos de la ventana
             for (int e = 0; e < historia[i].length; e++) {
-                for (int v = 0; v < tventana && (i+v < historia[i].length); v++) {
+                for (int v = 0; v < tventana && (i + v < historia[i].length); v++) {
                     if (historia[i + v][e]) {
                         //Si el elemento es positivo entonces lo anotamos como positivo
                         elementos.add(new Elemento(e, v, true));
@@ -67,18 +67,18 @@ public class TDFPG {
             //Ordenar de mayor a menor soporte según la tabla que antes hemos calculado
             //En la tabla ya están ordenados así que es cuestión de ir emparejando en el orden que establece
 
-            
+
             //Recorrer la tabla de ranking y ordenar igual
             ArrayList<Elemento> ordenados = new ArrayList<>();
-            
+
             //Mientras la lista de ordenados sea menor que la de elementos, nos faltan por ordenar
             //int rc =0; //Elemento del ranking que estamos buscando
             //while(ordenados.size()<elementos.size()){
             //}
-                
-            
-            
-            
+
+
+
+
             //Generamos el comparador con el ranking
             CompElemList comp = new CompElemList(ranking);
 
@@ -91,65 +91,109 @@ public class TDFPG {
             //Almacenar los índices para acceder más rápido a los registrosTD
             //Ya tenemos la lista de elementos ordenados
             //Ahora a recorrerlos en orden y construir el árbol
-            
+
             Nodo nodo_actual = padre;
             for (Elemento elem : elementos) {
                 //Tenemos que generar una rama de este conjunto
                 //Buscamos un hijo del padre que sea igual que el nodo actual
-                
+
                 Nodo nodo_hijo = null;
-                for(Nodo h : nodo_actual.getHijos()){
-                    if (elem.equals(h.getElemento())){
+                for (Nodo h : nodo_actual.getHijos()) {
+                    if (elem.equals(h.getElemento())) {
                         nodo_hijo = h;
                     }
                 }
-                
-                
+
+
                 //Si no existe lo añadimos con el nodo actual como padre y frecuencia 0 (en el constructor del nuevo nodo)
-                if(nodo_hijo == null){
+                if (nodo_hijo == null) {
                     nodo_hijo = new Nodo(elem, nodo_actual);
                     nodo_actual.getHijos().add(nodo_hijo);
-                    
+
                     //Cuando añadimos un nodo nuevo ampliamos la lista enlazada
                     //Añadimos el enlace a la lista del registro correspondiente de la tabla
                     //Buscamos el elemento correspondiente de la lista, usamos el ranking que es una copia para eso
                     int registro = ranking.indexOf(elem);
-                    
+
                     Nodo link = tabla.get(registro).getNodo();
-                    
+
                     //Si es el primer nodo lo añadimos directamente
-                    if (link == null){
+                    if (link == null) {
                         tabla.get(registro).setNodo(nodo_hijo);
-                    }else{
+                    } else {
                         //Sino tenemos que buscar el último nodo
                         Nodo ultimo = link;
-                        while(link != null){
-                        ultimo = link;
-                        link = ultimo.getSiguiente();
+                        while (link != null) {
+                            ultimo = link;
+                            link = ultimo.getSiguiente();
                         }
                         //En este momento tenemos que link es null y por tanto ultimo es el último nodo de la lista
                         ultimo.setSiguiente(nodo_hijo);
                     }
                 }
-                
+
                 //En cualquier caso sumamos uno a la frecuencia del hijo
-                nodo_hijo.setFreq(nodo_hijo.getFreq()+1);
-                
-                
-                
+                nodo_hijo.setFreq(nodo_hijo.getFreq() + 1);
+
+
+
                 //Actualizamos el nodo actual al hijo
                 nodo_actual = nodo_hijo;
             }
-            
+
 
 
         }
-            //Aquí deberíamos tener el árbol construido
-            System.out.println("Arbol contruido");
-            
-            
+        //Aquí deberíamos tener el árbol construido
+        System.out.println("Arbol contruido");
+        System.out.println(imprimir_arbol(padre, " ", true));
+
+
+        //A partir de aquí hay que empezar a formar los grupos desde abajo
+        //Recorremos la tabla en orden inverso y vamos extrayendo subconjuntos a la vez que restamos uno a las frecuencias
+        
+
+
 
         return reglas;
+    }
+
+    public String imprimir_arbol(Nodo padre, String historia, boolean ultimo) {
+        StringBuilder sb = new StringBuilder();
+
+        //Imprimimos al padre con la historia de nuestro padre
+        //El elemento del nodo
+
+
+        if (ultimo) {
+            int l = historia.length();
+            if (l > 0) {
+                sb.append(historia.substring(0, l-1));
+            }
+            sb.append("|");
+
+        } else {
+            sb.append(historia);
+        }
+
+        sb.append("_").append(padre.getElemento()).append(" ").append(padre.getFreq()).append("\n");
+
+
+        //Guardamos la historia que nos viene dada
+        //Y creamos una historia nueva para nuestros hijos
+        //String nuevahistoria = historia
+
+        //Para cada hijo añadimos su versión impresa
+        ArrayList<Nodo> hijos = padre.getHijos();
+        for (int i = 0; i < hijos.size(); i++) {
+
+            if (i == hijos.size() - 1) {
+                sb.append(imprimir_arbol(hijos.get(i), historia + " ", true));
+            } else {
+                sb.append(imprimir_arbol(hijos.get(i), historia + "|", false));
+            }
+        }
+        return sb.toString();
     }
 
     private String showarray(ArrayList<Elemento> a) {
@@ -174,7 +218,7 @@ public class TDFPG {
         Collections.sort(frecuencias, new ComparadorFreq());
 
         //Escribir la lista
-        System.out.println("Imprimiendo lista ordenada");
+        System.out.println("Imprimiendo lista ordenada por soporte");
         System.out.println(this.imprimir_lista(frecuencias));
 
         //Meter a lista en la tabla
