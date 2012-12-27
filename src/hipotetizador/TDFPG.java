@@ -154,7 +154,7 @@ public class TDFPG {
         //A partir de aquí hay que empezar a formar los grupos desde abajo
         //Recorremos la tabla en orden inverso y vamos extrayendo subconjuntos a la vez que restamos uno a las frecuencias
 
-        ArrayList<HashSet<Elemento>> grupos = new ArrayList<>();
+        ArrayList<GrupoElementos> grupos = new ArrayList<>();
 
         for (int r = tabla.size() - 1; r >= 0; r--) {
             RegistroTD reg = tabla.get(r);
@@ -162,16 +162,19 @@ public class TDFPG {
 
             while (atratar != null) { //Hasta que se acabe la lista
                 //De quí saldrá un grupo nuevo
-                HashSet<Elemento> grupo = new HashSet<>();
+                GrupoElementos grupo = new GrupoElementos();
                 Nodo n_anotar = atratar;
 
+                //Nos quedamos con la frecuencia del nodo
+                int freq = n_anotar.getFreq();
                 //Sólo seguimos si la frecuencia del nodo es mayor que cero
-                if (n_anotar.getFreq() > 0) {
+                if (freq > 0) {
 
                     Elemento e_anotar = n_anotar.getElemento();
                     while (e_anotar != null) { //Hasta que lleguemos al nodo raíz cuyo elemento es null
-                        grupo.add(e_anotar); //Añadimos el elemento al grupo
-                        n_anotar.setFreq(n_anotar.getFreq() - 1); //Restamos uno a la frecuencia
+                        grupo.getElementos().add(e_anotar); //Añadimos el elemento al grupo
+                        grupo.setSoporte(freq); //Anotamos el soporte del grupo
+                        n_anotar.setFreq(n_anotar.getFreq() - freq); //Restamos el soporte que estamos contando
                         n_anotar = n_anotar.getPadre(); //Nos movemos al nodo padre
                         e_anotar = n_anotar.getElemento(); //Accedemos a su elemento
                     }
@@ -191,7 +194,18 @@ public class TDFPG {
 
         return reglas;
     }
+    
+        public String imprime(ArrayList<GrupoElementos> c) {
+        StringBuilder sb = new StringBuilder();
 
+        for (GrupoElementos e : c) {
+            sb.append(e).append("\n");
+        }
+
+        return sb.toString();
+    }
+        
+        
     public String imprime(HashSet<Elemento> c) {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
@@ -202,6 +216,7 @@ public class TDFPG {
         return sb.toString();
     }
 
+    /*
     public String imprime(ArrayList<HashSet<Elemento>> c) {
         StringBuilder sb = new StringBuilder();
 
@@ -211,6 +226,7 @@ public class TDFPG {
 
         return sb.toString();
     }
+     */
 
     public String imprimir_arbol(Nodo padre, String historia, boolean ultimo) {
         StringBuilder sb = new StringBuilder();
