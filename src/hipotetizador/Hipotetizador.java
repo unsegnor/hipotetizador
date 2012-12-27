@@ -16,8 +16,8 @@ public class Hipotetizador {
     public static void main(String[] args) {
         // TODO code application logic here
         
-        int entradas = 10;
-        int ventana = 3;
+        int entradas = 4;
+        int ventana = 1;
         
         Hipo h = new Hipo(entradas, ventana);
         
