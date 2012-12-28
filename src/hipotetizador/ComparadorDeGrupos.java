@@ -12,6 +12,8 @@ import java.util.Comparator;
  * @author Victor
  */
 public class ComparadorDeGrupos implements Comparator<GrupoElementos> {
+    
+    static ComparadorElementos comp = new ComparadorElementos();
 
     @Override
     public int compare(GrupoElementos t, GrupoElementos t1) {
@@ -19,7 +21,6 @@ public class ComparadorDeGrupos implements Comparator<GrupoElementos> {
                
         ArrayList<Elemento> e1 = t.getElementos();
         ArrayList<Elemento> e2 = t1.getElementos();
-        ComparadorElementos comp = new ComparadorElementos();
         
         if(respuesta == 0){
             //Si miden lo mismo desempatamos por los elementos, suponemos que están ordenados

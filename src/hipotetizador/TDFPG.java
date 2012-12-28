@@ -176,7 +176,7 @@ public class TDFPG {
         //A partir de aquí hay que empezar a formar los grupos desde abajo
         //Recorremos la tabla en orden inverso y vamos extrayendo subconjuntos a la vez que restamos uno a las frecuencias
 
-        ArrayList<GrupoElementos> grupos = new ArrayList<>();
+        ArrayList<GrupoElementos> grupos_frecuentes = new ArrayList<>();
 
         for (int r = tabla.size() - 1; r >= 0; r--) {
             RegistroTD reg = tabla.get(r);
@@ -203,14 +203,14 @@ public class TDFPG {
 
 
                     //Aquí ya tenemos el grupo relleno
-                    grupos.add(grupo); //Lo añadimos a la lista de grupos
+                    grupos_frecuentes.add(grupo); //Lo añadimos a la lista de grupos
                 }
                 atratar = atratar.getSiguiente();
             }
         }
         //Aquí deberíamos tener la lista de grupos frecuentes
         System.out.append("Lista de grupos frecuentes\n");
-        System.out.println(imprime(grupos));
+        System.out.println(imprime(grupos_frecuentes));
 
         //Aquí ya deberíamos ser capaces de generar
         //de cada grupo de elementos todas las reglas posibles con su soporte y confianza
@@ -220,7 +220,7 @@ public class TDFPG {
 
         //debemos obtener una lista con todos los subgrupos y su soporte (heredado del grupo)
         ArrayList<GrupoElementos> subgrupos = new ArrayList<>();
-        for (GrupoElementos g : grupos) {
+        for (GrupoElementos g : grupos_frecuentes) {
             g.ordenar(); //Ordenamos los elementos del grupo
             subgrupos.addAll(g.getSubgrupos());
         }
@@ -240,7 +240,7 @@ public class TDFPG {
 
         //después ir comprobando si uno y el siguiente son el mismo para ir reduciendo
         //y así evitar una comparación de todos con todos
-        ArrayList<GrupoElementos> subgrupos_resumen = new ArrayList<>();
+        ArrayList<GrupoElementos> soporte_de_grupos = new ArrayList<>();
 
 
         /*int l = subgrupos.size();
@@ -260,25 +260,120 @@ public class TDFPG {
                     nuevo.setSoporte(nuevo.getSoporte() + e.getSoporte());
                 } else {
                     //Si soy diferente del nuevo es que se han terminado sus iguales y comienzan los míos
-                    subgrupos_resumen.add(nuevo); //Lo apunto
+                    soporte_de_grupos.add(nuevo); //Lo apunto
                     nuevo = e; //Me asigno el turno
                 }
             }
         }
         //Al finalizar el que quede en nuevo hay que añadirlo también
-        subgrupos_resumen.add(nuevo);
+        soporte_de_grupos.add(nuevo);
 
         //Aquí deberíamos tener los grupos únicos con sus respectivos soportes
         //Imprimimos todos los subgrupos con sus soportes
         System.out.append("Lista de subgrupos sumados\n");
-        System.out.println(imprime(subgrupos_resumen));
+        System.out.println(imprime(soporte_de_grupos));
 
         //Ahora hay que generar las reglas y calcular su confianza
+        //Para cada grupo frecuente, obtenemos todos sus subgrupos
+        //y probamos relaciones entre ellos, consultamos el soporte de cada grupo con soporte_de_grupos
+        //así calculamos la confianza de cada posible relación
+        ArrayList<Regla> reglas_totales = new ArrayList<Regla>();
+        for(GrupoElementos g:grupos_frecuentes){
+            //Hacemos permutaciones de los subgrupos para generar reglas que después analizaremos
+            ArrayList<Regla> reglas_de_g = this.generar_reglas(g);
+            //TODO si pudiéramos reutilizar los subgrupos calculados y simplemente apuntarlos...
+            reglas_totales.addAll(reglas_de_g);
+        }
+        
+        //Ahora tenemos todas las reglas deducibles en reglas_totales
+        //vamos a consultar el soporte de los grupos que las componen y a anotárselo
+        
+        for(Regla r:reglas_totales){
+            //Buscar el antecedente en la lista de soporte_grupos
+            int i_antecedente= soporte_de_grupos.indexOf(r.getAntecedente());
+            int i_consecuente=soporte_de_grupos.indexOf(r.getConsecuente());
+            //Apuntamos el antecedente al mismo objeto
+            r.setAntecedente(soporte_de_grupos.get(i_antecedente));
+            r.setConsecuente(soporte_de_grupos.get(i_consecuente));
+        }
+        
+        //Imprimimos las reglas con sus subgrupos vestidos (son sus soportes)
+        System.out.println("Reglas con soportes en los grupos");
+        System.out.println(imprime_reglas(reglas_totales));
+        
         
         
         return reglas;
     }
 
+    private String imprime_reglas(ArrayList<Regla> reglas){
+        StringBuilder sb = new StringBuilder();
+        
+            for(Regla r:reglas){
+                sb.append(r.toString()).append("\n");
+            }
+        
+        return sb.toString();
+    }
+    
+    /**
+     * Combina todos los grupos que se le pasan en el array para obtener todas las reglas posibles
+     * @param g
+     * @return 
+     */
+    public ArrayList<Regla> generar_reglas(GrupoElementos g){
+        ArrayList<Regla> respuesta = new ArrayList<Regla>();
+
+            ArrayList<Elemento> elementos = g.getElementos();
+        
+            int l = elementos.size();
+            boolean num[] = new boolean[l]; //El número que indica qué elementos pertenecen a la parte izquierda de la regla
+
+            //permutar opciones, contar en binario
+            int c = 0; //Posición a cambiar
+            boolean fin = false;
+            while (c < l) {
+                c = 0;//Inicializamos el contador de posición
+                while (!fin && num[c]) {//Si la posición es un uno entonces ponemos un cero y nos movemos a la siguiente
+                    num[c] = false;
+                    c++;
+
+                    //Si nos hemos pasado hemos acabado
+                    if (c >= l) {
+                        fin = true;
+                    }
+
+                }
+                //TODO se puede mejorar ya que se generan reglas que podrían generarse simplemente cambiando la posición del antecedente y el consecuente
+                //invirtiendo la regla
+                
+                if (!fin) {//Si aún no hemos terminado...
+                    //Cuando hayamos llegado a una posición en false la volvemos true
+                    num[c] = true;
+
+                    //Con el número que compone el vector formamos la regla
+                    GrupoElementos antecedente = new GrupoElementos();
+                    GrupoElementos consecuente = new GrupoElementos();
+                    for (int i = 0; i < l; i++) {//Recorremos el número bit a bit, en los que haya true se copian al antecedente
+                        if (num[i]) { //Si la posición i está a true ese elemento es del antecedente
+                            antecedente.getElementos().add(elementos.get(i));
+                        }else{
+                            consecuente.getElementos().add(elementos.get(i));
+                        }
+                    }
+                    
+                    //Si cualquiera de los dos antecedente o conscuente está vacío la regla no se copia
+                    if(antecedente.getElementos().size()>0 && consecuente.getElementos().size()>0){
+                    //Añadimos la nueva regla a la lista a devolver
+                    respuesta.add(new Regla(antecedente, consecuente));
+                    }
+
+                }
+            }
+        
+        return respuesta;
+    }
+    
     public String imprime(ArrayList<GrupoElementos> c) {
         StringBuilder sb = new StringBuilder();
 
