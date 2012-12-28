@@ -41,7 +41,14 @@ public class TDFPG {
 
 
         //Recorrer la historia por segunda vez construyendo el árbol
-        for (int i = 0; i <= (historia.length - tventana); i++) {
+        for (int i = 0; i <= (historia.length - tventana); i++) { 
+            //TODO de esta forma estamos obviando los datos del final que no componen una ventana entera,
+            //así que a mayor tamaño de ventana mayor diferencia habrá entre los valores de la tabla de entrada (calculada línea por línea)
+            //y los valores (de soporte) del resultado de esta exploración, ya que se están tirando muestras.
+            //Puedo intentar aprovechar las de aquí de algún otro modo, tirar también las que se usaban para calcular las tablas iniciales
+            //o dejarlo así siendo consciente del porqué de la diferencia de soportes.
+            
+            
             //Fabricamos los conjuntos en función del tamaño de la ventana
             //Desde i hasta i+tventana
 
@@ -64,21 +71,21 @@ public class TDFPG {
             //Aquí ya tenemos los elementos que vamos a analizar
             System.out.println("Elementos que vamos a analizar");
             System.out.println(showarray(elementos));
-            
+
             //Antes de continuar tenemos que filtrarlos para quedarnos sólo con los que aparezcan en el ranking
             //que serán aquellos que han superado el soporte mínimo
             //TODO esto hay que cambiarlo... podríamos referenciarlos al encontrarlos arriba y ya sólo utilizar su índice
-            
+
             ArrayList<Elemento> filtrados = new ArrayList<>();
-            
-            for(Elemento e:ranking){
-                if(elementos.contains(e)){
+
+            for (Elemento e : ranking) {
+                if (elementos.contains(e)) {
                     filtrados.add(e);
                 }
             }
-            
+
             //Creo que aquí están filtrados y ordenados
-            
+
             //Tenemos que ordenarlos y construir el árbol
 
             //Ordenar de mayor a menor soporte según la tabla que antes hemos calculado
@@ -189,7 +196,7 @@ public class TDFPG {
                     while (e_anotar != null) { //Hasta que lleguemos al nodo raíz cuyo elemento es null
                         grupo.getElementos().add(e_anotar); //Añadimos el elemento al grupo
                         grupo.setSoporte(freq); //Anotamos el soporte del grupo
-                        n_anotar.setFreq(n_anotar.getFreq() - freq); //Restamos el soporte que estamos contando
+                        n_anotar.setFreq(n_anotar.getFreq() - freq); //Restamos el soporte que estamos contando (la dejamos a cero)
                         n_anotar = n_anotar.getPadre(); //Nos movemos al nodo padre
                         e_anotar = n_anotar.getElemento(); //Accedemos a su elemento
                     }
@@ -201,16 +208,75 @@ public class TDFPG {
                 atratar = atratar.getSiguiente();
             }
         }
-            //Aquí deberíamos tener la lista de grupos frecuentes
-            System.out.append("Lista de grupos frecuentes\n");
-            System.out.println(imprime(grupos));
+        //Aquí deberíamos tener la lista de grupos frecuentes
+        System.out.append("Lista de grupos frecuentes\n");
+        System.out.println(imprime(grupos));
+
+        //Aquí ya deberíamos ser capaces de generar
+        //de cada grupo de elementos todas las reglas posibles con su soporte y confianza
+        //primero hay que conseguir todos los subgrupos y sus soportes
+        //a partir de la lista de grupos frecuentes obtenida
+        //permutamos para seleccionar subgrupos e ir anotando su soporte
+
+        //debemos obtener una lista con todos los subgrupos y su soporte (heredado del grupo)
+        ArrayList<GrupoElementos> subgrupos = new ArrayList<>();
+        for (GrupoElementos g : grupos) {
+            g.ordenar(); //Ordenamos los elementos del grupo
+            subgrupos.addAll(g.getSubgrupos());
+        }
+
+        //Imprimimos todos los subgrupos con sus soportes
+        System.out.append("Lista de subgrupos \n");
+        System.out.println(imprime(subgrupos));
+
+        //después juntaremos los grupos idénticos y sumaremos sus soportes
+        //primero convendría ordenarlos
+        ComparadorDeGrupos comp = new ComparadorDeGrupos();
+        Collections.sort(subgrupos, comp);
+
+        //Imprimimos todos los subgrupos con sus soportes
+        System.out.append("Lista de subgrupos ordenados\n");
+        System.out.println(imprime(subgrupos));
+
+        //después ir comprobando si uno y el siguiente son el mismo para ir reduciendo
+        //y así evitar una comparación de todos con todos
+        ArrayList<GrupoElementos> subgrupos_resumen = new ArrayList<>();
 
 
+        /*int l = subgrupos.size();
+         GrupoElementos nuevo = subgrupos.get(0);
+         for(int i=0; i<l-1; i++){
+         //Si eres igual que el siguiente entonces 
+         }*/
+
+
+
+        GrupoElementos nuevo = null;
+        for (GrupoElementos e : subgrupos) {
+            if (nuevo == null) {//Soy el primero, me asigno el turno
+                nuevo = e;
+            } else {
+                if (comp.compare(e, nuevo) == 0) {//Si soy igual que el nuevo, me sumo
+                    nuevo.setSoporte(nuevo.getSoporte() + e.getSoporte());
+                } else {
+                    //Si soy diferente del nuevo es que se han terminado sus iguales y comienzan los míos
+                    subgrupos_resumen.add(nuevo); //Lo apunto
+                    nuevo = e; //Me asigno el turno
+                }
+            }
+        }
+        //Al finalizar el que quede en nuevo hay que añadirlo también
+        subgrupos_resumen.add(nuevo);
+
+        //Aquí deberíamos tener los grupos únicos con sus respectivos soportes
+        //Imprimimos todos los subgrupos con sus soportes
+        System.out.append("Lista de subgrupos sumados\n");
+        System.out.println(imprime(subgrupos_resumen));
 
         return reglas;
     }
-    
-        public String imprime(ArrayList<GrupoElementos> c) {
+
+    public String imprime(ArrayList<GrupoElementos> c) {
         StringBuilder sb = new StringBuilder();
 
         for (GrupoElementos e : c) {
@@ -219,8 +285,7 @@ public class TDFPG {
 
         return sb.toString();
     }
-        
-        
+
     public String imprime(HashSet<Elemento> c) {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
@@ -232,17 +297,16 @@ public class TDFPG {
     }
 
     /*
-    public String imprime(ArrayList<HashSet<Elemento>> c) {
-        StringBuilder sb = new StringBuilder();
+     public String imprime(ArrayList<HashSet<Elemento>> c) {
+     StringBuilder sb = new StringBuilder();
 
-        for (HashSet<Elemento> e : c) {
-            sb.append(imprime(e)).append("\n");
-        }
+     for (HashSet<Elemento> e : c) {
+     sb.append(imprime(e)).append("\n");
+     }
 
-        return sb.toString();
-    }
+     return sb.toString();
+     }
      */
-
     public String imprimir_arbol(Nodo padre, String historia, boolean ultimo) {
         StringBuilder sb = new StringBuilder();
 

@@ -23,7 +23,6 @@ public class Hipotetizador {
         //TODO poder hacer saltar el procesamiento de la historia antes de que se llene
         //TODO no dejar tan claros los subíndices, no deben expresar un instante fijo después, sino, un rato después, difuso
 
-
         int entradas = 4;
         int ventana = 2;
 
