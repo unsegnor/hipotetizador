@@ -98,7 +98,7 @@ public class Hipo {
 
             //Ejecutamos el algoritmo para extraer las reglas
             //deducir_reglas();
-            this.TopDown(0.51f);//indicamos el umbral
+            this.TopDown(0.51f, 0.8f);//indicamos el umbral de soporte y el de confianza
 
             //Reiniciar memorias a corto y medio plazo
             reiniciar_memorias();
@@ -214,7 +214,7 @@ public class Hipo {
         return itemset;
     }
 
-    private void TopDown(float umbral) {
+    private void TopDown(float umbral, double umbral_de_confianza) {
         //Leer la historia y elaborar la tabla de frecuencias
         ArrayList<InfoElemento> tabla = new ArrayList<>();
         for (int i = 0; i < cuentas.length; i++) {
@@ -252,7 +252,19 @@ public class Hipo {
 
         //Ejecutar TopDown con la lista
         TDFPG td = new TDFPG();
-        td.ejecutar(tabla, historia, tventana);
+        ArrayList<Regla> reglas = td.ejecutar(tabla, historia, tventana);
+        ArrayList<Regla> reglas_filtradas = new ArrayList<>();
+        //Filtramos las reglas por el umbral de confianza
+        for(Regla r:reglas){
+            if(r.getConfianza()>= umbral_de_confianza){
+                reglas_filtradas.add(r);
+            }
+        }
+        
+        //Imprimimos las reglas filtradas
+        System.out.println("Reglas filtradas por confianza >=" + umbral_de_confianza);
+        System.out.println(td.imprime_reglas(reglas_filtradas));
+        
     }
 
     private HashSet<HashSet<Elemento>> cartesiano(Set<Elemento> A, Set<Elemento> B) {

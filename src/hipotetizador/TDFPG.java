@@ -308,12 +308,15 @@ public class TDFPG {
 
         //Imprimimos las reglas con sus subgrupos vestidos (son sus soportes)
         System.out.println("Reglas con soportes y estadísticas");
-        System.out.println(imprime_reglas(reglas_totales));
-
+        System.out.println(imprime_reglas(reglas_totales));       
+        
+        //Devolvemos las reglas sin filtrar, ya las filtrará el cliente
+        reglas = reglas_totales;
+        
         return reglas;
     }
 
-    private String imprime_reglas(ArrayList<Regla> reglas) {
+    public String imprime_reglas(ArrayList<Regla> reglas) {
         StringBuilder sb = new StringBuilder();
 
         for (Regla r : reglas) {
