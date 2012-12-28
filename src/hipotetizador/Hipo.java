@@ -5,6 +5,7 @@
 package hipotetizador;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -254,6 +255,7 @@ public class Hipo {
         TDFPG td = new TDFPG();
         ArrayList<Regla> reglas = td.ejecutar(tabla, historia, tventana);
         ArrayList<Regla> reglas_filtradas = new ArrayList<>();
+        
         //Filtramos las reglas por el umbral de confianza
         for(Regla r:reglas){
             if(r.getConfianza()>= umbral_de_confianza){
@@ -265,6 +267,24 @@ public class Hipo {
         System.out.println("Reglas filtradas por confianza >=" + umbral_de_confianza);
         System.out.println(td.imprime_reglas(reglas_filtradas));
         
+        //Ordenamos las reglas por impacto
+        Collections.sort(reglas_filtradas, new ComparadorDeReglas());
+        
+        
+        //Imprimimos las reglas filtradas y ordenadas por impacto
+        System.out.println("Reglas filtradas por confianza >=" + umbral_de_confianza);
+        System.out.println(imprime_reglas_bonitas(reglas_filtradas,this.nentradas, this.tventana));
+        
+    }
+    
+    public String imprime_reglas_bonitas(ArrayList<Regla> reglas, int tentradas, int tventana){
+                StringBuilder sb = new StringBuilder();
+
+        for (Regla r : reglas) {
+            sb.append(r.toStringBonito(tentradas, tventana)).append("\n");
+        }
+
+        return sb.toString();
     }
 
     private HashSet<HashSet<Elemento>> cartesiano(Set<Elemento> A, Set<Elemento> B) {

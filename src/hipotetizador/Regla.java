@@ -101,7 +101,29 @@ public class Regla {
         StringBuilder sb = new StringBuilder();
         
             if(antecedente!=null && consecuente!=null){
-                sb.append(antecedente.toString()).append("->").append(consecuente.toString()).append(" S:").append(this.getSoporte()).append(" C:").append(this.getConfianza());
+                sb.append(antecedente.toString()).append("->").append(consecuente.toString())
+                        .append(" S:").append(this.getSoporte())
+                        .append(" C:").append(this.getConfianza())
+                        .append(" I:").append(this.getImpacto());
+            }else{
+                sb.append("¡¡¡NO HAY ANTECEDENTE O CONSECUENTE!!!");
+            }
+        
+        return sb.toString();
+    }
+    
+        public String toStringBonito(int tentradas, int tventana){
+        StringBuilder sb = new StringBuilder();
+        
+            if(antecedente!=null && consecuente!=null){
+                sb.append("--------------------------------------------------------").append('\n')
+                        .append(antecedente.toStringBonito(tentradas, tventana)).append('\n')
+                        .append("|||").append('\n')
+                        .append("VVV").append('\n').append('\n')
+                        .append(consecuente.toStringBonito(tentradas, tventana)).append('\n')
+                        .append(" S:").append(this.getSoporte())
+                        .append(" C:").append(this.getConfianza())
+                        .append(" I:").append(this.getImpacto());
             }else{
                 sb.append("¡¡¡NO HAY ANTECEDENTE O CONSECUENTE!!!");
             }
@@ -118,6 +140,10 @@ public class Regla {
         if(antecedente!=null && consecuente!=null){
             //Calculamos la confianza como
             this.setConfianza((float)this.getSoporte()/(float)antecedente.getSoporte());
+            
+            //Calculamos el impacto como el soporte total dividido entre el soporte del consecuente
+            //con esta medida pretendemos dar más importancia a las reglas que implican cosas que no son normales
+            this.setImpacto((float)this.getSoporte()/(float)consecuente.getSoporte());
             
             //TODO Calculamos las demás estadísticas interesantes...
             

@@ -5,6 +5,7 @@
 package hipotetizador;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -61,79 +62,112 @@ public class GrupoElementos {
         return sb.toString();
     }
 
-    
+    public String toStringBonito(int tentradas, int tventana) {
+        StringBuilder sb = new StringBuilder();
+
+        //Generamos la matriz de tventana x tentradas de enteros
+        int[][] m = new int[tventana][tentradas];
+        
+        //La inicializamos a -1
+        for(int v=0; v<tventana; v++){
+            Arrays.fill(m[v], -1);
+        }
+        
+        //Recorremos los elementos del grupo y vamos anotando unos o ceros
+        for(Elemento e: elementos){           
+                m[e.subindice][e.entrada] = e.verdadero?1:0;
+        }
+        
+        //Generamos la matriz de tventana x tentradas en un string
+        for (int v = 0; v < tventana; v++) {
+            for (int e = 0; e < tentradas; e++) {
+                //Añadimos a la cadena caracteres en función del valor de la matriz
+                //-1 -> X : quiere decir que no importa el valor que tenga
+                //1 -> 1
+                //0 -> 0
+                sb.append(m[v][e]==-1?'X':(m[v][e]==0?'0':'1'));    
+            }
+            //Al finalizar una línea de ventana se introduce un intro
+            sb.append('\n');
+        }
+        return sb.toString();
+    }
+
     public void ordenar() {
         Collections.sort(elementos, comp);
     }
-/**
- * 
- * @return Devuelve los últimos subgrupos calculados.
- */
+
+    /**
+     *
+     * @return Devuelve los últimos subgrupos calculados.
+     */
     public ArrayList<GrupoElementos> getLastSubgrupos() {
         return _subgrupos;
     }
-    
+
     /**
-     * Siempre se calculan de nuevo los subgrupos al llamar a esta función. Si quieres los últimos calculados utiliza getLastSubgrupos()
-     * @return 
+     * Siempre se calculan de nuevo los subgrupos al llamar a esta función. Si
+     * quieres los últimos calculados utiliza getLastSubgrupos()
+     *
+     * @return
      */
     public ArrayList<GrupoElementos> getSubgrupos() {
 
-            ArrayList<GrupoElementos> subgrupos = new ArrayList<>();
-            int l = elementos.size();
-            boolean num[] = new boolean[l]; //El número que indica qué elementos pertenecen al conjunto
+        ArrayList<GrupoElementos> subgrupos = new ArrayList<>();
+        int l = elementos.size();
+        boolean num[] = new boolean[l]; //El número que indica qué elementos pertenecen al conjunto
 
-            //permutar opciones, contar en binario
-            int c = 0; //Posición a cambiar
-            boolean fin = false;
-            while (c < l) {
-                c = 0;//Inicializamos el contador de posición
-                while (!fin && num[c]) {//Si la posición es un uno entonces ponemos un cero y nos movemos a la siguiente
-                    num[c] = false;
-                    c++;
+        //permutar opciones, contar en binario
+        int c = 0; //Posición a cambiar
+        boolean fin = false;
+        while (c < l) {
+            c = 0;//Inicializamos el contador de posición
+            while (!fin && num[c]) {//Si la posición es un uno entonces ponemos un cero y nos movemos a la siguiente
+                num[c] = false;
+                c++;
 
-                    //Si nos hemos pasado hemos acabado
-                    if (c >= l) {
-                        fin = true;
-                    }
-
+                //Si nos hemos pasado hemos acabado
+                if (c >= l) {
+                    fin = true;
                 }
 
-                if (!fin) {//Si aún no hemos terminado...
-                    //Cuando hayamos llegado a una posición en false la volvemos true
-                    num[c] = true;
-
-                    //Con el número que compone el vector formamos el subgrupo
-                    GrupoElementos nuevo = new GrupoElementos();
-                    for (int i = 0; i < l; i++) {//Recorremos el número bit a bit, en los que haya true se copian al subgrupo
-                        if (num[i]) { //Si la posición i está a true ese elemento es del subgrupo
-                            nuevo.getElementos().add(elementos.get(i));
-                        }
-                    }
-                    //El soporte del grupo se hereda
-                    nuevo.setSoporte(this.getSoporte());
-                    //Añadimos el nuevo grupo a la lista a devolver
-                    subgrupos.add(nuevo);
-
-                }
             }
+
+            if (!fin) {//Si aún no hemos terminado...
+                //Cuando hayamos llegado a una posición en false la volvemos true
+                num[c] = true;
+
+                //Con el número que compone el vector formamos el subgrupo
+                GrupoElementos nuevo = new GrupoElementos();
+                for (int i = 0; i < l; i++) {//Recorremos el número bit a bit, en los que haya true se copian al subgrupo
+                    if (num[i]) { //Si la posición i está a true ese elemento es del subgrupo
+                        nuevo.getElementos().add(elementos.get(i));
+                    }
+                }
+                //El soporte del grupo se hereda
+                nuevo.setSoporte(this.getSoporte());
+                //Añadimos el nuevo grupo a la lista a devolver
+                subgrupos.add(nuevo);
+
+            }
+        }
 
         return subgrupos;
     }
-    
+
     @Override
-    public boolean equals (Object obj){
+    public boolean equals(Object obj) {
         if (obj == this) {
             return true;
         }
         if (obj == null || obj.getClass() != this.getClass()) {
             return false;
         }
-        
+
         GrupoElementos otro = (GrupoElementos) obj;
-        
-        
-        
-        return (compG.compare(this, otro)==0);
+
+
+
+        return (compG.compare(this, otro) == 0);
     }
 }
