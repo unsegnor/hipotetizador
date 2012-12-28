@@ -17,7 +17,7 @@ public class GrupoElementos {
     static ComparadorDeGrupos compG = new ComparadorDeGrupos();
     private ArrayList<GrupoElementos> _subgrupos;
     private ArrayList<Elemento> elementos = new ArrayList<>();
-    private int soporte = 0;
+    private long soporte = 0;
 
     /**
      * @return the elementos
@@ -36,14 +36,14 @@ public class GrupoElementos {
     /**
      * @return the soporte
      */
-    public int getSoporte() {
+    public long getSoporte() {
         return soporte;
     }
 
     /**
      * @param soporte the soporte to set
      */
-    public void setSoporte(int soporte) {
+    public void setSoporte(long soporte) {
         this.soporte = soporte;
     }
 

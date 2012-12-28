@@ -101,11 +101,29 @@ public class Regla {
         StringBuilder sb = new StringBuilder();
         
             if(antecedente!=null && consecuente!=null){
-                sb.append(antecedente.toString()).append("->").append(consecuente.toString());
+                sb.append(antecedente.toString()).append("->").append(consecuente.toString()).append(" S:").append(this.getSoporte()).append(" C:").append(this.getConfianza());
             }else{
                 sb.append("¡¡¡NO HAY ANTECEDENTE O CONSECUENTE!!!");
             }
         
         return sb.toString();
+    }
+    
+    //TODO para calcular el soporte de la regla será el soporte del grupo... ya viene calculado.
+    
+    /**
+     * Utiliza los soportes de su antecedente y consecuente para calcular la confianza de la regla.
+     */
+    public void calcular_estadisticas(){
+        if(antecedente!=null && consecuente!=null){
+            //Calculamos la confianza como
+            this.setConfianza((float)this.getSoporte()/(float)antecedente.getSoporte());
+            
+            //TODO Calculamos las demás estadísticas interesantes...
+            
+            
+        }else{
+            System.err.append("Error: intentando calcular estadísticas de una regla sin antecedente o consecuente");
+        }
     }
 }
