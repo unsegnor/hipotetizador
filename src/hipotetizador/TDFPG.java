@@ -273,6 +273,9 @@ public class TDFPG {
         System.out.append("Lista de subgrupos sumados\n");
         System.out.println(imprime(subgrupos_resumen));
 
+        //Ahora hay que generar las reglas y calcular su confianza
+        
+        
         return reglas;
     }
 
