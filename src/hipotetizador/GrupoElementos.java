@@ -152,6 +152,9 @@ public class GrupoElementos {
             }
         }
 
+        //Almacenamos el puntero al resultado por si se vuelve a pedir inmediatamente
+        _subgrupos = subgrupos;
+        
         return subgrupos;
     }
 

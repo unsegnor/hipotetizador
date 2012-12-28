@@ -99,7 +99,7 @@ public class Hipo {
 
             //Ejecutamos el algoritmo para extraer las reglas
             //deducir_reglas();
-            this.TopDown(0f, 0f);//indicamos el umbral de soporte y el de confianza
+            this.TopDown(0f, 0.8f);//indicamos el umbral de soporte y el de confianza, el umbral de soporte en este momento no aporta beneficio alguno...
 
             //Reiniciar memorias a corto y medio plazo
             reiniciar_memorias();

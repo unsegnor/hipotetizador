@@ -17,8 +17,15 @@ public class ComparadorDeReglas implements Comparator<Regla> {
         
         int respuesta = 0;
         
-        //De momento se comprueba que el impacto sea mayor para estar antes
-        /*
+
+        //Que sean reglas pequeñas
+        if(respuesta ==0){
+            respuesta = (t.getAntecedente().getElementos().size()+t.getConsecuente().getElementos().size() 
+                    - (t1.getAntecedente().getElementos().size()+t1.getConsecuente().getElementos().size()));
+        }
+        
+        //Que el impacto sea mayor para estar antes
+        if(respuesta == 0){
         if(t.getImpacto() > t1.getImpacto()){
             respuesta = -1;
         }else if(t1.getImpacto()>t.getImpacto()){
@@ -26,12 +33,8 @@ public class ComparadorDeReglas implements Comparator<Regla> {
         }else{
             respuesta = 0;
         }
-        */
-        //Después que sean reglas pequeñas
-        if(respuesta ==0){
-            respuesta = (t.getAntecedente().getElementos().size()+t.getConsecuente().getElementos().size() 
-                    - (t1.getAntecedente().getElementos().size()+t1.getConsecuente().getElementos().size()));
         }
+        
         
         /*if(respuesta ==0){
             respuesta = t.getConsecuente().getElementos().size() - t1.getConsecuente().getElementos().size();
