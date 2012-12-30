@@ -92,7 +92,15 @@ public class Hipo {
 
         //Contamos los unos (trues) que lleguen en cada posición
         anotar(ph, muestra);
-
+        
+        /*Elementos clave que serán la entrada de muchas funciones
+        * - Historia
+        * - Ventana de atención: Filtro de entradas y longitud
+        * - Grupos frecuentes con soporte calculado
+        * - Subgrupos con soporte calculado
+        *
+        * 
+        */
         ph++;
 
         //Si la historia está llena procedemos a ejecutar el algoritmo
@@ -100,7 +108,10 @@ public class Hipo {
             //Reinicializamos ph
             ph = 0;
 
-            //Ejecutamos el algoritmo para extraer las reglas
+            //Ejecutamos el algoritmo para extraer todas las reglas posibles
+            //y determinar la ventana de atención para la nueva historia que venga
+            //Ventana de atención -> entradas a tener en cuenta, muestras a tener en cuenta a la vez, 
+            //frecuencia de muestreo?? (por si queremos saltarnos algunas muestras)
             //deducir_reglas();
             this.TopDown(0f, 0.8f);//indicamos el umbral de soporte y el de confianza, el umbral de soporte en este momento no aporta beneficio alguno...
 
@@ -218,10 +229,24 @@ public class Hipo {
         return itemset;
     }
 
-    private void TopDown(float umbral, double umbral_de_confianza) {
+    
+    /**
+     * 
+     * @param umbral
+     * @param entradas vector de booleanos de tamaño nentradas que indica qué entradas estamos utilizando
+     * @param longitud
+     * @return 
+     */
+    private ArrayList<InfoElemento> elaborar_tabla(float umbral, boolean[] entradas, int longitud){
         //Leer la historia y elaborar la tabla de frecuencias
+        
+        //Aquí filtramos por umbral (que de momento no ha resultado ser útil)
+        //y por entradas
+        
+               
         ArrayList<InfoElemento> tabla = new ArrayList<>();
-        for (int i = 0; i < cuentas.length; i++) {
+        for (int i = 0; i < cuentas.length; i++) { //Para cada entrada
+            if(entradas[i]){ //Si es una entrada que queremos miramos sus elementos
             for (int j = 0; j < cuentas[i].length; j++) {
                 Par<Long, Long> par = cuentas[i][j];
                 long apariciones = par.getPrimero();
@@ -252,12 +277,33 @@ public class Hipo {
                     tabla.add(infof);
                 }
             }
+            }
         }
+        return tabla;
+    }
+    
+    //Con cada historia buscamos nuevas hipótesis y desmentimos o confirmamos las que ya teníamos.
+    //no hace falta aprovechar al máximo todas las historias... tenemos muchas... podemos guardar resúmenes
+    
+    /**
+     * Aquí se deberían dar todas las pasadas a la historia que creamos conveniente para extraer
+     * reglas y elaborar hipótesis listas para ser confirmadas o desmentidas conlas siguientes historias.
+     * @param umbral
+     * @param umbral_de_confianza 
+     */
+    private void TopDown(float umbral, double umbral_de_confianza) {
+        
 
+        //Determinar las entradas y la longitud de la ventana
+        
+        ArrayList<InfoElemento> tabla = this.elaborar_tabla(umbral);
+        
         //Ejecutar TopDown con la lista
         TDFPG td = new TDFPG();
         ArrayList<Regla> reglas = td.ejecutar(tabla, historia, tventana);
         ArrayList<Regla> reglas_filtradas = new ArrayList<>();
+        
+        //Aquí tenemos las reglas
         
         //Filtramos las reglas por el umbral de confianza
         for(Regla r:reglas){
