@@ -11,6 +11,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * 
+ * PROBANDO REESTUCTURACIÓN II
+ * 
  * Memoria a corto plazo -> tamaño de la ventana Memoria a medio plazo -> tamaño
  * de la historia Memoria a largo plazo -> reglas
  *
