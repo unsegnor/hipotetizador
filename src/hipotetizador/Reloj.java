@@ -14,14 +14,14 @@ import java.util.Date;
  */
 class Reloj {
     
-    private Integer segundos = new Integer(0);
-    private Integer minutos = new Integer (0);
-    private Integer horas = new Integer(0);
+    private int segundos = 0;
+    private int minutos = 0;
+    private int horas = 0;
 
     public void actualizar(){
-        setSegundos((Integer) Calendar.getInstance().get(Calendar.SECOND));
-        setMinutos((Integer) Calendar.getInstance().get(Calendar.MINUTE));
-        setHoras((Integer) Calendar.getInstance().get(Calendar.HOUR));
+        setSegundos(Calendar.getInstance().get(Calendar.SECOND));
+        setMinutos(Calendar.getInstance().get(Calendar.MINUTE));
+        setHoras(Calendar.getInstance().get(Calendar.HOUR));
     }
 
     /**
@@ -35,7 +35,7 @@ class Reloj {
     /**
      * @param segundos the segundos to set
      */
-    public void setSegundos(Integer segundos) {
+    public void setSegundos(int segundos) {
         this.segundos = segundos;
     }
 
@@ -50,7 +50,7 @@ class Reloj {
     /**
      * @param minutos the minutos to set
      */
-    public void setMinutos(Integer minutos) {
+    public void setMinutos(int minutos) {
         this.minutos = minutos;
     }
 
@@ -65,7 +65,7 @@ class Reloj {
     /**
      * @param horas the horas to set
      */
-    public void setHoras(Integer horas) {
+    public void setHoras(int horas) {
         this.horas = horas;
     }
     
