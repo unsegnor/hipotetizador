@@ -5,6 +5,7 @@
 package hipotetizador;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -127,6 +128,39 @@ public class Hipo {
         //itemsets.clear();
     }
 
+    public Par<Long, Long>[][] hacer_cuentas(boolean[][] historia, int l_ventana){
+        int l=historia.length;
+        int n_entradas = historia[0].length;
+        boolean[] muestra;
+        Par<Long, Long>[][] respuesta = new Par[n_entradas][l_ventana];
+        
+        
+        for(int i=0; i<l;i++){
+            
+            muestra = historia[i];
+            
+            //Indice en el que escribir
+        for (int j = 0; j < nentradas; j++) {
+
+            for (int k = 0; k < tventana; k++) {
+
+                //Si la entrada es mayor o igual que el registro entonces podemos tenerlo en cuenta 
+                if (k <= i) {
+                    //Si el valor de la entrada y el registro es verdadero entonces sumamos la frecuencia
+                    if (muestra[j]) {
+                        cuentas[j][k].setPrimero(cuentas[j][k].getPrimero() + 1);
+                    }
+
+                    //En cualquier caso sumamos uno a las apariciones
+                    cuentas[j][k].setSegundo(cuentas[j][k].getSegundo() + 1);
+                }
+            }
+
+        }
+        }
+        return respuesta;
+    }
+    
     private void anotar(int i, boolean[] muestra) {
 
         //Indice en el que escribir
@@ -295,8 +329,17 @@ public class Hipo {
         
 
         //Determinar las entradas y la longitud de la ventana
+        boolean[] entradas = new boolean[nentradas];
         
-        ArrayList<InfoElemento> tabla = this.elaborar_tabla(umbral);
+        Arrays.fill(entradas, true);
+        
+        //TODO determinar las entradas que se van a utilizar
+        
+        int longitud_ventana = 2;
+        
+        ArrayList<InfoElemento> tabla = this.elaborar_tabla(umbral, entradas, longitud_ventana);
+        
+        
         
         //Ejecutar TopDown con la lista
         TDFPG td = new TDFPG();
