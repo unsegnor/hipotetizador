@@ -21,7 +21,7 @@ public class TDFPG {
      */
     //ArrayList<RegistroTD> tabla = new ArrayList< >();
     //Esta función espera la lista de elementos filtrados por soporte mínimo
-    public ArrayList<Regla> ejecutar(ArrayList<InfoElemento> frecuencias, boolean[][] historia, int tventana) {
+    public ArrayList<Regla> extraer_reglas(ArrayList<InfoElemento> frecuencias, boolean[][] historia, int tventana) {
         ArrayList<Regla> reglas = new ArrayList<>();
 
         ArrayList<RegistroTD> tabla = inicializar_tabla(frecuencias);
@@ -287,6 +287,7 @@ public class TDFPG {
             reglas_totales.addAll(reglas_de_g);
         }*/
         
+        //QUESTION ¿Se hace así? ¿Se conforman las reglas para todos los subgrupos de un grupo frecuente? ¿O sólo B = X-A? ¿Por qué? ¿Diferencias?...
         //En lugar de eso vamos a calcular las reglas a partir de los subgrupos de los grupos frecuentes
         for(GrupoElementos g:grupos_frecuentes){
             //Obtenemos sus subgrupos
