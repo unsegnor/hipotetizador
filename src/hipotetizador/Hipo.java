@@ -204,15 +204,15 @@ public class Hipo {
                         HashSet<Elemento> conjunto = new HashSet<Elemento>();
                         if ((float) par.getPrimero() / (float) par.getSegundo() > frecuencia_umbral) {
                             //Si la frecuencia es mayor lo añadimos al conjunto
-                            nuevo.entrada = i;
-                            nuevo.subindice = j;
-                            nuevo.verdadero = true;
+                            nuevo.setEntrada(i);
+                            nuevo.setSubindice(j);
+                            nuevo.setVerdadero(true);
                             conjunto.add(nuevo);
                             itemset.add(conjunto);
                         } else if (((float) (par.getSegundo() - par.getPrimero()) / (float) par.getSegundo()) > frecuencia_umbral) {
-                            nuevo.entrada = i;
-                            nuevo.subindice = j;
-                            nuevo.verdadero = false;
+                            nuevo.setEntrada(i);
+                            nuevo.setSubindice(j);
+                            nuevo.setVerdadero(false);
                             conjunto.add(nuevo);
                             itemset.add(conjunto);
                         }
@@ -279,7 +279,6 @@ public class Hipo {
         //Aquí filtramos por umbral (que de momento no ha resultado ser útil)
         //y por entradas
 
-
         ArrayList<InfoElemento> tabla = new ArrayList<>();
         for (int i = 0; i < cuentas.length; i++) { //Para cada entrada
             if (entradas[i]) { //Si es una entrada que queremos miramos sus elementos
@@ -291,9 +290,9 @@ public class Hipo {
                     Elemento verdadero = new Elemento();
                     //Si la frecuencia es mayor lo añadimos al conjunto
                     if ((float) apariciones / (float) total > umbral) {
-                        verdadero.entrada = i;
-                        verdadero.subindice = j;
-                        verdadero.verdadero = true;
+                        verdadero.setEntrada(i);
+                        verdadero.setSubindice(j);
+                        verdadero.setVerdadero(true);
                         InfoElemento infov = new InfoElemento();
                         infov.setElemento(verdadero);
                         infov.setApariciones(apariciones);
@@ -303,9 +302,9 @@ public class Hipo {
 
                     if ((float) ausencias / (float) total > umbral) {
                         Elemento falso = new Elemento();
-                        falso.entrada = i;
-                        falso.subindice = j;
-                        falso.verdadero = false;
+                        falso.setEntrada(i);
+                        falso.setSubindice(j);
+                        falso.setVerdadero(false);
                         InfoElemento infof = new InfoElemento();
                         infof.setElemento(falso);
                         infof.setApariciones(ausencias);
@@ -318,6 +317,44 @@ public class Hipo {
         return tabla;
     }
 
+    /**
+     * Buscará una explicación a la totalidad de las acciones que sucedan en la historia, inventará todo el contexto oculto que sea necesario
+     * devolverá la explicación más sencilla
+     * @param umbral_de_hipotesis
+     * @param umbral_de_certeza 
+     */
+    private Teoria sinAmbiguedad(boolean[][] la_historia, double umbral_de_hipotesis, double umbral_de_certeza){
+        
+        //Obtener la historia
+        
+        //Elaborar la tabla para el TDFPG (extensible)
+        
+        
+        //Ejecutar TDFPG y obtener las reglas
+        
+        //Clasificar las reglas en certezas e hipótesis
+        
+        //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
+        
+        //Mientras haya casos ambiguos hacer
+        
+            //Añadir entradas de casos ambiguos a la tabla
+        
+            //Ejecutar TDFPG con la tabla más las nuevas entradas
+        
+            //Clasificar en certezas e hipótesis
+        
+            //Detectar y almacenar casos ambiguos
+        
+        //fin_mientras
+        
+        //Elaborar Teoría con las certezas
+        
+        //Devolver la teoría que explica la historia
+        
+        return null;
+    }
+    
     //Con cada historia buscamos nuevas hipótesis y desmentimos o confirmamos las que ya teníamos.
     //no hace falta aprovechar al máximo todas las historias... tenemos muchas... podemos guardar resúmenes
     /**
@@ -384,7 +421,9 @@ public class Hipo {
         System.out.println(imprime_reglas_bonitas(hipotesis, this.nentradas, this.tventana));
 
 
-        //Determinar entradas que sabemos explicar
+        //Determinar entradas que sabemos explicar (en realidad es para las que tenemos reglas que las implican
+        //no tiene porqué existir una regla para cada posible caso)
+        //TODO Comprobar que tenemos reglas que expliquen el 1 y el 0
         boolean[] entradas_explicables = calcular_entradas_afectadas(certezas, nentradas, false, true);
         
         System.out.println("Entradas explicables");
@@ -567,15 +606,15 @@ public class Hipo {
         for (Regla r : reglas) {
             if (contar_antecedente) {
                 for (Elemento a : r.getAntecedente().getElementos()) {
-                    if (!respuesta[a.entrada]) {
-                        respuesta[a.entrada] = true;
+                    if (!respuesta[a.getEntrada()]) {
+                        respuesta[a.getEntrada()] = true;
                     }
                 }
             }
             if (contar_consecuente) {
                 for (Elemento a : r.getConsecuente().getElementos()) {
-                    if (!respuesta[a.entrada]) {
-                        respuesta[a.entrada] = true;
+                    if (!respuesta[a.getEntrada()]) {
+                        respuesta[a.getEntrada()] = true;
                     }
                 }
             }
@@ -598,9 +637,9 @@ public class Hipo {
                 //TODO cambiar esto
                 //Sólo podemos utilizar la primera línea del antecedente para comparar
                 
-                if(e.subindice==0){
+                if(e.getSubindice()==0){
                     //Si no se cumple alguna de las entradas del antecedente -> no se dispara
-                    if(b[e.entrada]!=e.verdadero){ 
+                    if(b[e.getEntrada()]!=e.isVerdadero()){ 
                         dispara = false;
                     }
                 }
@@ -611,10 +650,10 @@ public class Hipo {
                     //TODO cambiar esto
                     //Comprobamos sólo los consecuentes de la segunda línea
                     
-                    if(e.subindice==1){
+                    if(e.getSubindice()==1){
                         //Lo imprimimos en la respuesta ()
                         //TODO habría que comprobar si ya se había impreso otra cosa y hay conflicto entre las reglas, suponemos que no lo hay
-                        respuesta[e.entrada] = e.verdadero;
+                        respuesta[e.getEntrada()] = e.isVerdadero();
                     }
                     
                 }
