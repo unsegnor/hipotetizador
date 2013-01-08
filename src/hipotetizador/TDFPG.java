@@ -21,6 +21,7 @@ public class TDFPG {
      */
     //ArrayList<RegistroTD> tabla = new ArrayList< >();
     //Esta función espera la lista de elementos filtrados por soporte mínimo
+    //VOY A DESCOMPONERLA!!
     public ArrayList<Regla> extraer_reglas(ArrayList<InfoElemento> frecuencias, boolean[][] historia, int tventana) {
         ArrayList<Regla> reglas = new ArrayList<>();
 
