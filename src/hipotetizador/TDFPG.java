@@ -43,6 +43,7 @@ public class TDFPG {
         //Obtener las listas de elementos que vamos a tratar (en función de la ventana)
         ArrayList<ArrayList<Elemento> > listas_elementos = hacer_listas(historia, tventana, ranking);
         
+        //TODO hacer que se pueda llamar al algoritmo pasándole una listas ya hechas
         for(ArrayList<Elemento> ordenados : listas_elementos){
             Nodo nodo_actual = padre;
             for (Elemento elem : ordenados) {

@@ -386,6 +386,16 @@ public class Hipo {
             //Para eso primero necesitamos una función que nos diga si un caso se da o no en un grupoElementos a analizar, que ya contiene todos los elementos de la ventana
             //Así que necesitamos los GrupoElementos para consultar, añadir y volver a deducir reglas sin tener que recorrer la historia entera
             
+            //TODO también podría modificar la historia y volver a ejecutarlo todo (de momento hacerlo eficaz y más adelante eficiente)
+            
+                //Modificar la historia a partir de la historia original y obtener la historia ampliada
+                    //Hacer una matriz más grande, una entrada más por cada caso_ambiguo
+                    //Rellenar los valores de los casos ambiguos en función de si se cumple o no lo que dice el caso... no se puede, tiene que ser la historia ya extendida la que utilicemos
+                        //la tabla después de aplicar la ventana
+            
+                //Volver a hacer cuentas
+            
+                //Volver a calcular la tabla de la historia ampliada
             
         //Ejecutar TDFPG con la tabla más las nuevas entradas
 
