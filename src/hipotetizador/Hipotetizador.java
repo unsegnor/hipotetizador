@@ -23,15 +23,40 @@ public class Hipotetizador {
         //TODO poder hacer saltar el procesamiento de la historia antes de que se llene
         //TODO no dejar tan claros los subíndices, no deben expresar un instante fijo después, sino, un rato después, difuso
 
-        int entradas = 4;
+        int entradas = 1;
         int ventana = 2;
 
         Hipo h = new Hipo(entradas, ventana);
 
         //muestras_aleatorias(h,entradas);
-        muestras_secuenciales(h,entradas);
+        //muestras_secuenciales(h,entradas);
+        cuenta_hasta(h,entradas,4);
     }
 
+    public static void cuenta_hasta(Hipo h, int entradas, int num){
+        
+
+        
+        //Generar muestras aleatorias
+        for (int i = 0; i < 100; i++) {
+            
+        //Muestra inicial
+        boolean[] muestra = new boolean[entradas];
+
+            if(i%num==0){
+                muestra[0] = true;
+            }else{
+                muestra[0] = false;
+            }
+
+            //Imprimir muestra
+            System.out.println(i + "-" + Muestras.imprimir_muestra(muestra));
+
+            //Introducir muestra
+            h.muestrear(muestra);
+        }
+    }
+    
     public static void muestras_aleatorias(Hipo h, int entradas) {
 
         //Generar muestras aleatorias

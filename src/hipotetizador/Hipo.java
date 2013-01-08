@@ -50,7 +50,7 @@ import java.util.Set;
 public class Hipo {
 
     int tventana = 3;
-    int thistoria = 1000;//Integer.MAX_VALUE-1;
+    int thistoria = 100;//Integer.MAX_VALUE-1;
     //Memoria a corto plazo
     boolean[][] ventana;
     //Memoria a medio plazo
