@@ -40,83 +40,10 @@ public class TDFPG {
         D.d(showarray(ranking));
         //Filtrar los nodos por el soporte mínimo o filtrarlos antes
 
-
-        //Recorrer la historia por segunda vez construyendo el árbol
-        for (int i = 0; i <= (historia.length - tventana); i++) {
-            //TODO de esta forma estamos obviando los datos del final que no componen una ventana entera,
-            //así que a mayor tamaño de ventana mayor diferencia habrá entre los valores de la tabla de entrada (calculada línea por línea)
-            //y los valores (de soporte) del resultado de esta exploración, ya que se están tirando muestras.
-            //Puedo intentar aprovechar las de aquí de algún otro modo, tirar también las que se usaban para calcular las tablas iniciales
-            //o dejarlo así siendo consciente del porqué de la diferencia de soportes.
-
-
-            //Fabricamos los conjuntos en función del tamaño de la ventana
-            //Desde i hasta i+tventana
-
-            //historia[i][entrada]
-
-            //Obtener los elementos que componen el conjunto a analizar
-
-            ArrayList<Elemento> elementos = new ArrayList<>(); //Elementos de la ventana
-            for (int e = 0; e < historia[i].length; e++) {
-                for (int v = 0; v < tventana && (i + v < historia.length); v++) {
-                    if (historia[i + v][e]) {
-                        //Si el elemento es positivo entonces lo anotamos como positivo
-                        elementos.add(new Elemento(e, v, true));
-                    } else {
-                        //Si no es verdadero entonces lo anotamos como falso
-                        elementos.add(new Elemento(e, v, false));
-                    }
-                }
-            }
-            //Aquí ya tenemos los elementos que vamos a analizar
-            D.d("Elementos que vamos a analizar");
-            D.d(showarray(elementos));
-
-            //Antes de continuar tenemos que filtrarlos para quedarnos sólo con los que aparezcan en el ranking
-            //que serán aquellos que han superado el soporte mínimo
-            //TODO esto hay que cambiarlo... podríamos referenciarlos al encontrarlos arriba y ya sólo utilizar su índice
-
-            ArrayList<Elemento> filtrados = new ArrayList<>();
-
-            for (Elemento e : ranking) {
-                if (elementos.contains(e)) {
-                    filtrados.add(e);
-                }
-            }
-
-            //Creo que aquí están filtrados y ordenados
-
-            //Tenemos que ordenarlos y construir el árbol
-
-            //Ordenar de mayor a menor soporte según la tabla que antes hemos calculado
-            //En la tabla ya están ordenados así que es cuestión de ir emparejando en el orden que establece
-
-
-            //Recorrer la tabla de ranking y ordenar igual
-            ArrayList<Elemento> ordenados = filtrados;//new ArrayList<>();
-
-            //Mientras la lista de ordenados sea menor que la de elementos, nos faltan por ordenar
-            //int rc =0; //Elemento del ranking que estamos buscando
-            //while(ordenados.size()<elementos.size()){
-            //}
-
-
-
-
-            //Generamos el comparador con el ranking
-            //CompElemList comp = new CompElemList(ranking);
-
-            //Ordenamos la lista de elementos según el comparador
-            //Collections.sort(elementos, comp);
-
-            D.d("Elementos que vamos a analizar ordenados");
-            D.d(showarray(ordenados));
-
-            //Almacenar los índices para acceder más rápido a los registrosTD
-            //Ya tenemos la lista de elementos ordenados
-            //Ahora a recorrerlos en orden y construir el árbol
-
+        //Obtener las listas de elementos que vamos a tratar (en función de la ventana)
+        ArrayList<ArrayList<Elemento> > listas_elementos = hacer_listas(historia, tventana, ranking);
+        
+        for(ArrayList<Elemento> ordenados : listas_elementos){
             Nodo nodo_actual = padre;
             for (Elemento elem : ordenados) {
                 //Tenemos que generar una rama de este conjunto
@@ -531,5 +458,89 @@ public class TDFPG {
         }
 
         return sb.toString();
+    }
+
+    public ArrayList<ArrayList<Elemento> > hacer_listas(boolean[][] historia, int tventana, Iterable<Elemento> ranking) {
+        ArrayList<ArrayList<Elemento> > respuesta = new ArrayList<>();
+        //Recorrer la historia por segunda vez construyendo el árbol
+        for (int i = 0; i <= (historia.length - tventana); i++) {
+            //TODO de esta forma estamos obviando los datos del final que no componen una ventana entera,
+            //así que a mayor tamaño de ventana mayor diferencia habrá entre los valores de la tabla de entrada (calculada línea por línea)
+            //y los valores (de soporte) del resultado de esta exploración, ya que se están tirando muestras.
+            //Puedo intentar aprovechar las de aquí de algún otro modo, tirar también las que se usaban para calcular las tablas iniciales
+            //o dejarlo así siendo consciente del porqué de la diferencia de soportes.
+
+
+            //Fabricamos los conjuntos en función del tamaño de la ventana
+            //Desde i hasta i+tventana
+
+            //historia[i][entrada]
+
+            //Obtener los elementos que componen el conjunto a analizar
+
+            ArrayList<Elemento> elementos = new ArrayList<>(); //Elementos de la ventana
+            for (int e = 0; e < historia[i].length; e++) {
+                for (int v = 0; v < tventana && (i + v < historia.length); v++) {
+                    if (historia[i + v][e]) {
+                        //Si el elemento es positivo entonces lo anotamos como positivo
+                        elementos.add(new Elemento(e, v, true));
+                    } else {
+                        //Si no es verdadero entonces lo anotamos como falso
+                        elementos.add(new Elemento(e, v, false));
+                    }
+                }
+            }
+            //Aquí ya tenemos los elementos que vamos a analizar
+            D.d("Elementos que vamos a analizar");
+            D.d(showarray(elementos));
+
+            //Antes de continuar tenemos que filtrarlos para quedarnos sólo con los que aparezcan en el ranking
+            //que serán aquellos que han superado el soporte mínimo
+            //TODO esto hay que cambiarlo... podríamos referenciarlos al encontrarlos arriba y ya sólo utilizar su índice
+
+            ArrayList<Elemento> filtrados = new ArrayList<>();
+
+            for (Elemento e : ranking) {
+                if (elementos.contains(e)) {
+                    filtrados.add(e);
+                }
+            }
+
+            //Creo que aquí están filtrados y ordenados
+
+            //Tenemos que ordenarlos y construir el árbol
+
+            //Ordenar de mayor a menor soporte según la tabla que antes hemos calculado
+            //En la tabla ya están ordenados así que es cuestión de ir emparejando en el orden que establece
+
+
+            //Recorrer la tabla de ranking y ordenar igual
+            ArrayList<Elemento> ordenados = filtrados;//new ArrayList<>();
+
+            //Mientras la lista de ordenados sea menor que la de elementos, nos faltan por ordenar
+            //int rc =0; //Elemento del ranking que estamos buscando
+            //while(ordenados.size()<elementos.size()){
+            //}
+
+
+
+
+            //Generamos el comparador con el ranking
+            //CompElemList comp = new CompElemList(ranking);
+
+            //Ordenamos la lista de elementos según el comparador
+            //Collections.sort(elementos, comp);
+
+            D.d("Elementos que vamos a analizar ordenados");
+            D.d(showarray(ordenados));
+            
+            //Almacenar los índices para acceder más rápido a los registrosTD
+            
+            respuesta.add(ordenados);
+            
+            //Ya tenemos la lista de elementos ordenados
+            //Ahora a recorrerlos en orden y construir el árbol
+        }
+        return respuesta;
     }
 }
