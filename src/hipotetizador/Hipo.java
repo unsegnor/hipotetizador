@@ -116,7 +116,8 @@ public class Hipo {
             //Ventana de atención -> entradas a tener en cuenta, muestras a tener en cuenta a la vez, 
             //frecuencia de muestreo?? (por si queremos saltarnos algunas muestras)
             //deducir_reglas();
-            this.TopDown(0f, 1f, 0.2f);//indicamos el umbral de soporte y el de confianza, el umbral de soporte en este momento no aporta beneficio alguno...
+            //this.TopDown(0f, 1f, 0.2f);//indicamos el umbral de soporte y el de confianza, el umbral de soporte en este momento no aporta beneficio alguno...
+            this.sinAmbiguedad(nentradas, tventana, historia, 0f, 1f);
 
             //Reiniciar memorias a corto y medio plazo
             reiniciar_memorias();
@@ -134,7 +135,17 @@ public class Hipo {
         int l = historia.length;
         int n_entradas = historia[0].length;
         boolean[] muestra;
+
         Par<Long, Long>[][] respuesta = new Par[n_entradas][l_ventana];
+        //Inicializar cuentas
+        for (int i = 0; i < nentradas; i++) {
+
+            for (int j = 0; j < tventana; j++) {
+                respuesta[i][j] = new Par<Long, Long>(0l, 0l);
+
+            }
+
+        }
 
 
         for (int i = 0; i < l; i++) {
@@ -150,11 +161,11 @@ public class Hipo {
                     if (k <= i) {
                         //Si el valor de la entrada y el registro es verdadero entonces sumamos la frecuencia
                         if (muestra[j]) {
-                            cuentas[j][k].setPrimero(cuentas[j][k].getPrimero() + 1);
+                            respuesta[j][k].setPrimero(respuesta[j][k].getPrimero() + 1);
                         }
 
                         //En cualquier caso sumamos uno a las apariciones
-                        cuentas[j][k].setSegundo(cuentas[j][k].getSegundo() + 1);
+                        respuesta[j][k].setSegundo(respuesta[j][k].getSegundo() + 1);
                     }
                 }
 
@@ -273,17 +284,17 @@ public class Hipo {
      * @param longitud
      * @return
      */
-    private ArrayList<InfoElemento> elaborar_tabla(float umbral, boolean[] entradas, int longitud) {
+    private ArrayList<InfoElemento> elaborar_tabla(Par<Long, Long>[][] _cuentas, float umbral, boolean[] entradas, int longitud) {
         //Leer la historia y elaborar la tabla de frecuencias
 
         //Aquí filtramos por umbral (que de momento no ha resultado ser útil)
         //y por entradas
 
         ArrayList<InfoElemento> tabla = new ArrayList<>();
-        for (int i = 0; i < cuentas.length; i++) { //Para cada entrada
+        for (int i = 0; i < _cuentas.length; i++) { //Para cada entrada
             if (entradas[i]) { //Si es una entrada que queremos miramos sus elementos
-                for (int j = 0; j < cuentas[i].length; j++) {
-                    Par<Long, Long> par = cuentas[i][j];
+                for (int j = 0; j < _cuentas[i].length; j++) {
+                    Par<Long, Long> par = _cuentas[i][j];
                     long apariciones = par.getPrimero();
                     long total = par.getSegundo();
                     long ausencias = total - apariciones;
@@ -318,43 +329,79 @@ public class Hipo {
     }
 
     /**
-     * Buscará una explicación a la totalidad de las acciones que sucedan en la historia, inventará todo el contexto oculto que sea necesario
-     * devolverá la explicación más sencilla
+     * Buscará una explicación a la totalidad de las acciones que sucedan en la
+     * historia, inventará todo el contexto oculto que sea necesario devolverá
+     * la explicación más sencilla
+     *
      * @param umbral_de_hipotesis
-     * @param umbral_de_certeza 
+     * @param umbral_de_certeza
      */
-    private Teoria sinAmbiguedad(boolean[][] la_historia, double umbral_de_hipotesis, double umbral_de_certeza){
-        
+    private Teoria sinAmbiguedad(int nentradas, int long_ventana, boolean[][] la_historia, double umbral_de_hipotesis, double umbral_de_certeza) {
         //Obtener la historia
-        
+        //Hacer las cuentas primera pasada
+        //TODO crear clase CUENTAS
+        Par<Long, Long>[][] primerScan = this.hacer_cuentas(la_historia, long_ventana);
+
+        //Seleccionar las entradas que queremos tener en cuenta
+        //TODO crear clase SELECCION_DE_ENTRADAS
+        boolean[] seleccion_de_entradas = new boolean[nentradas];
+        Arrays.fill(seleccion_de_entradas, true);
+
         //Elaborar la tabla para el TDFPG (extensible)
-        
-        
+        //TODO crear clase TABLA
+        ArrayList<InfoElemento> tabla = this.elaborar_tabla(primerScan, 0, seleccion_de_entradas, long_ventana);
+
+        //Crear instancia de TDFPG
+        TDFPG td = new TDFPG();
+
         //Ejecutar TDFPG y obtener las reglas
-        
+        ArrayList<Regla> todas_las_reglas = td.extraer_reglas(tabla, historia, long_ventana);
+
         //Clasificar las reglas en certezas e hipótesis
-        
+        ArrayList<Regla> certezas = new ArrayList<>();
+        ArrayList<Regla> hipotesis = new ArrayList<>();
+
+        //Filtramos las reglas por el umbral de confianza
+        for (Regla r : todas_las_reglas) {
+            if (r.getConfianza() >= umbral_de_certeza) {
+                certezas.add(r);
+            } else if (r.getConfianza() >= umbral_de_hipotesis) {
+                hipotesis.add(r);
+            }
+        }
+
         //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
-        
+        ArrayList<Regla> casos_ambiguos = new ArrayList<>();
+        casos_ambiguos = extraer_casos_ambiguos(todas_las_reglas);
+
+        //Imprimimos los casos ambiguos
+        D.d("Casos ambiguos");
+        D.d(td.imprime_reglas(casos_ambiguos));
+
+
         //Mientras haya casos ambiguos hacer
-        
-            //Añadir entradas de casos ambiguos a la tabla
-        
-            //Ejecutar TDFPG con la tabla más las nuevas entradas
-        
-            //Clasificar en certezas e hipótesis
-        
-            //Detectar y almacenar casos ambiguos
-        
+        while(casos_ambiguos.size() > 0){
+        //Añadir entradas de casos ambiguos a la tabla
+            //Necesitamos contar las frecuencias con las que se da cada caso
+            //Para eso primero necesitamos una función que nos diga si un caso se da o no en un grupoElementos a analizar, que ya contiene todos los elementos de la ventana
+            //Así que necesitamos los GrupoElementos para consultar, añadir y volver a deducir reglas sin tener que recorrer la historia entera
+            
+            
+        //Ejecutar TDFPG con la tabla más las nuevas entradas
+
+        //Clasificar en certezas e hipótesis
+
+        //Detectar y almacenar casos ambiguos
+        }
         //fin_mientras
-        
+
         //Elaborar Teoría con las certezas
-        
+
         //Devolver la teoría que explica la historia
-        
+
         return null;
     }
-    
+
     //Con cada historia buscamos nuevas hipótesis y desmentimos o confirmamos las que ya teníamos.
     //no hace falta aprovechar al máximo todas las historias... tenemos muchas... podemos guardar resúmenes
     /**
@@ -377,7 +424,7 @@ public class Hipo {
 
         int longitud_ventana = 2;
 
-        ArrayList<InfoElemento> tabla = this.elaborar_tabla(umbral, entradas, longitud_ventana);
+        ArrayList<InfoElemento> tabla = this.elaborar_tabla(this.cuentas, umbral, entradas, longitud_ventana);
 
 
         //QUESTION ¿Procedimiento? Extraer reglas -> determinar hipótesis y certezas -> tratar de aumentar soporte de hipótesis para ver si la confianza aumenta o disminuye
@@ -413,37 +460,37 @@ public class Hipo {
 
 
         //Imprimimos las reglas filtradas y ordenadas por impacto
-        System.out.println("Certezas");
-        System.out.println(imprime_reglas_bonitas(certezas, this.nentradas, this.tventana));
+        D.d("Certezas");
+        D.d(imprime_reglas_bonitas(certezas, this.nentradas, this.tventana));
 
         //Imprimimos las reglas filtradas y ordenadas por impacto
-        System.out.println("Hipotesis");
-        System.out.println(imprime_reglas_bonitas(hipotesis, this.nentradas, this.tventana));
+        D.d("Hipotesis");
+        D.d(imprime_reglas_bonitas(hipotesis, this.nentradas, this.tventana));
 
 
         //Determinar entradas que sabemos explicar (en realidad es para las que tenemos reglas que las implican
         //no tiene porqué existir una regla para cada posible caso)
         //TODO Comprobar que tenemos reglas que expliquen el 1 y el 0
         boolean[] entradas_explicables = calcular_entradas_afectadas(certezas, nentradas, false, true);
-        
-        System.out.println("Entradas explicables");
-        System.out.println(imprime_array(entradas_explicables));
-        
+
+        D.d("Entradas explicables");
+        D.d(imprime_array(entradas_explicables));
+
         //Si podemos explicarlas todas deberíamos ser capaces de predecir el siguiente valor dado uno cualquiera
         //Para esto no deben existir conflictos entre reglas (habrá que comprobarlo antes)
-        
+
         //Deducir la siguiente línea
-        boolean[] siguiente = evaluar(historia[historia.length-1],certezas);
-        
-        System.out.println("Siguiente valor:");
-        System.out.println(imprime_array(siguiente));
-        
+        boolean[] siguiente = evaluar(historia[historia.length - 1], certezas);
+
+        D.d("Siguiente valor:");
+        D.d(imprime_array(siguiente));
+
         //Deducir las siguientes líneas
-        for(int linea=0; linea<10; linea++){
+        for (int linea = 0; linea < 10; linea++) {
             siguiente = evaluar(siguiente, certezas);
-                    System.out.println(linea + "-> " + imprime_array(siguiente));
+            D.d(linea + "-> " + imprime_array(siguiente));
         }
-        
+
         //Lo siguiente es mejorar lo que ya hace y empezar a investigar el contexto oculto
         //ir añadiendo bits cuando dos antecedentes llevan a consecuentes disjuntos (no pueden ser las dos certezas)
         //los porcentajes de confianza deberían sumar 1.
@@ -452,28 +499,27 @@ public class Hipo {
         //en este caso añadimos un bit por cada opción que se pone a 1 cuando se da cada opción
         //estos bits también se utilizarán en la historia para intentar deducir su comportamiento
         //hay momentos en los que no se sabe qué valor tienen, entre muestra y muestra que le importa... (reflexionar)
-        
+
         //Leer estado para devolver el siguiente
-        
+
         /*InputStreamReader isr = new InputStreamReader(System.in);
-        BufferedReader bf = new BufferedReader (isr);
-        String lineaTeclado = bf.readLine();
-        */
+         BufferedReader bf = new BufferedReader (isr);
+         String lineaTeclado = bf.readLine();
+         */
 
     }
 
-    public String imprime_array(boolean[] array){
+    public String imprime_array(boolean[] array) {
         StringBuilder sb = new StringBuilder();
-        
-        for(int i=0; i<array.length; i++){
+
+        for (int i = 0; i < array.length; i++) {
             sb.append(array[i]).append(" ");
         }
-        
-        
+
+
         return sb.toString();
     }
-            
-    
+
     public String imprime_reglas_bonitas(ArrayList<Regla> reglas, int tentradas, int tventana) {
         StringBuilder sb = new StringBuilder();
 
@@ -504,19 +550,19 @@ public class Hipo {
     private void deducir_reglas() {
 
         //Imprimir la historia.
-        System.out.println("Historia hasta el momento-----------------------------");
-        System.out.println(imprimir_historia());
+        D.d("Historia hasta el momento-----------------------------");
+        D.d(imprimir_historia());
 
         //Imprimir cuentas
-        System.out.println("Cuentas........................................");
-        System.out.println(imprimir_cuentas());
+        D.d("Cuentas........................................");
+        D.d(imprimir_cuentas());
 
         //Obtener 1itemset
         HashSet<HashSet<Elemento>> uno_itemset = this.obtener_k_itemsets(1, 0.8);
 
         //Imprimir 1-itemset
-        System.out.println("1-Itemset-------------------------------------------");
-        System.out.println(uno_itemset);
+        D.d("1-Itemset-------------------------------------------");
+        //D.d(uno_itemset);
 
     }
 
@@ -590,11 +636,15 @@ public class Hipo {
 
     /**
      * Indica las entradas que se ven afectadas por las reglas que se le pasan
+     *
      * @param reglas Array de reglas
      * @param nentradas número de entradas máximo
-     * @param contar_antecedente indica si se tienen en cuenta los antecedentes de las reglas
-     * @param contar_consecuente indica si se tienen en cuenta los consecuentes de las reglas
-     * @return devuelve un vector de booleanos indicando si la entrada de la posción i se ve afectada por alguna regla o no
+     * @param contar_antecedente indica si se tienen en cuenta los antecedentes
+     * de las reglas
+     * @param contar_consecuente indica si se tienen en cuenta los consecuentes
+     * de las reglas
+     * @return devuelve un vector de booleanos indicando si la entrada de la
+     * posción i se ve afectada por alguna regla o no
      */
     private boolean[] calcular_entradas_afectadas(ArrayList<Regla> reglas, int nentradas, boolean contar_antecedente, boolean contar_consecuente) {
         boolean[] respuesta = new boolean[nentradas];
@@ -622,43 +672,97 @@ public class Hipo {
 
         return respuesta;
     }
-/**
- * Evalúa un estado para devolve el estado siguiente según las reglas
- * TODO En realidad debería recibir y devolver una ventana
- * @param b
- * @return 
- */
+
+    /**
+     * Evalúa un estado para devolve el estado siguiente según las reglas TODO
+     * En realidad debería recibir y devolver una ventana
+     *
+     * @param b
+     * @return
+     */
     private boolean[] evaluar(boolean[] b, ArrayList<Regla> reglas) {
         boolean[] respuesta = new boolean[b.length];
         //Recorrer las reglas a ver cuál se dispara
-        for(Regla r:reglas){
+        for (Regla r : reglas) {
             boolean dispara = true;
-            for(Elemento e:r.getAntecedente().getElementos()){
+            for (Elemento e : r.getAntecedente().getElementos()) {
                 //TODO cambiar esto
                 //Sólo podemos utilizar la primera línea del antecedente para comparar
-                
-                if(e.getSubindice()==0){
+
+                if (e.getSubindice() == 0) {
                     //Si no se cumple alguna de las entradas del antecedente -> no se dispara
-                    if(b[e.getEntrada()]!=e.isVerdadero()){ 
+                    if (b[e.getEntrada()] != e.isVerdadero()) {
                         dispara = false;
                     }
                 }
             }
             //Si se dispara comprobamos el consecuente y lo escribimos en la respuesta
-            if(dispara){
-                for(Elemento e:r.getConsecuente().getElementos()){
+            if (dispara) {
+                for (Elemento e : r.getConsecuente().getElementos()) {
                     //TODO cambiar esto
                     //Comprobamos sólo los consecuentes de la segunda línea
-                    
-                    if(e.getSubindice()==1){
+
+                    if (e.getSubindice() == 1) {
                         //Lo imprimimos en la respuesta ()
                         //TODO habría que comprobar si ya se había impreso otra cosa y hay conflicto entre las reglas, suponemos que no lo hay
                         respuesta[e.getEntrada()] = e.isVerdadero();
                     }
-                    
+
                 }
             }
         }
+        return respuesta;
+    }
+
+    private ArrayList<Regla> extraer_casos_ambiguos(ArrayList<Regla> reglas) {
+        //Inicializar respuesta
+        ArrayList<Regla> respuesta = new ArrayList<>();
+
+
+        //Ordenar la lista por el antecedente
+        ComparaReglasPorAntecedente comp = new ComparaReglasPorAntecedente();
+        Collections.sort(reglas, comp);
+
+        //Recorrer la lista y hacer grupos de reglas que comparten el antecedente
+        //¿¿es necesario hacer grupos?? de momento no
+
+        ComparaGruposOrdenandoElementos compG = new ComparaGruposOrdenandoElementos();
+
+        //Guardamos la regla actual
+        Regla r_nueva = null;
+        GrupoElementos nuevo = null;
+        int iguales = 0;
+
+        D.d("Reglas ordenadas por antecedente");
+        for (Regla r : reglas) {
+            D.d(r.toString());
+            //Extraemos el grupo de elementos del antecedente
+            GrupoElementos e = r.getAntecedente();
+            if (nuevo == null) {//Soy el primero, me asigno el turno
+                nuevo = e;
+                r_nueva = r;
+                iguales = 0;
+            } else {
+                if (compG.compare(e, nuevo) == 0) {//Si soy igual que el nuevo, me sumo
+                    respuesta.add(r);
+                    iguales++;
+                } else {
+                    //Si soy diferente del nuevo es que se han terminado sus iguales y comienzan los míos
+                    if (iguales > 0) {
+                        respuesta.add(r_nueva);
+                    } //Lo apunto si había más de uno
+                    nuevo = e; //Me asigno el turno
+                    r_nueva = r;
+                    iguales = 0; //Reinicio el contador de iguales
+                }
+            }
+        }
+
+        //Si había iguales en el último caso añadimos también el último
+        if (iguales > 0) {
+            respuesta.add(r_nueva);
+        }
+
         return respuesta;
     }
 }

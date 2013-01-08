@@ -23,6 +23,10 @@ public class Hipotetizador {
         //TODO poder hacer saltar el procesamiento de la historia antes de que se llene
         //TODO no dejar tan claros los subíndices, no deben expresar un instante fijo después, sino, un rato después, difuso
 
+        //Activamos la depuración
+        D.enabled = true;
+        
+        
         int entradas = 1;
         int ventana = 2;
 
@@ -50,7 +54,7 @@ public class Hipotetizador {
             }
 
             //Imprimir muestra
-            System.out.println(i + "-" + Muestras.imprimir_muestra(muestra));
+            D.d(i + "-" + Muestras.imprimir_muestra(muestra));
 
             //Introducir muestra
             h.muestrear(muestra);
@@ -66,7 +70,7 @@ public class Hipotetizador {
             boolean muestra[] = Muestras.aleatoria(entradas);
 
             //Imprimir muestra
-            System.out.println(i + "-" + Muestras.imprimir_muestra(muestra));
+            D.d(i + "-" + Muestras.imprimir_muestra(muestra));
 
             //Introducir muestra
             h.muestrear(muestra);
@@ -89,7 +93,7 @@ public class Hipotetizador {
             muestra = Muestras.masuno_binario(muestra);
 
             //Imprimir muestra
-            System.out.println(i + "-" + Muestras.imprimir_muestra(muestra));
+            D.d(i + "-" + Muestras.imprimir_muestra(muestra));
 
             //Introducir muestra
             h.muestrear(muestra);

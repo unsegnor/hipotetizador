@@ -35,8 +35,8 @@ public class TDFPG {
         //Creamos el nodo raíz del árbol
         Nodo padre = new Nodo();
 
-        System.out.println("Ranking de elementos");
-        System.out.println(showarray(ranking));
+        D.d("Ranking de elementos");
+        D.d(showarray(ranking));
         //Filtrar los nodos por el soporte mínimo o filtrarlos antes
 
 
@@ -69,8 +69,8 @@ public class TDFPG {
                 }
             }
             //Aquí ya tenemos los elementos que vamos a analizar
-            System.out.println("Elementos que vamos a analizar");
-            System.out.println(showarray(elementos));
+            D.d("Elementos que vamos a analizar");
+            D.d(showarray(elementos));
 
             //Antes de continuar tenemos que filtrarlos para quedarnos sólo con los que aparezcan en el ranking
             //que serán aquellos que han superado el soporte mínimo
@@ -109,8 +109,8 @@ public class TDFPG {
             //Ordenamos la lista de elementos según el comparador
             //Collections.sort(elementos, comp);
 
-            System.out.println("Elementos que vamos a analizar ordenados");
-            System.out.println(showarray(ordenados));
+            D.d("Elementos que vamos a analizar ordenados");
+            D.d(showarray(ordenados));
 
             //Almacenar los índices para acceder más rápido a los registrosTD
             //Ya tenemos la lista de elementos ordenados
@@ -169,8 +169,8 @@ public class TDFPG {
 
         }
         //Aquí deberíamos tener el árbol construido
-        System.out.println("Arbol construido");
-        System.out.println(imprimir_arbol(padre, " ", true));
+        D.d("Arbol construido");
+        D.d(imprimir_arbol(padre, " ", true));
 
 
         //A partir de aquí hay que empezar a formar los grupos desde abajo
@@ -209,8 +209,8 @@ public class TDFPG {
             }
         }
         //Aquí deberíamos tener la lista de grupos frecuentes
-        System.out.append("Lista de grupos frecuentes\n");
-        System.out.println(imprime(grupos_frecuentes));
+        D.d("Lista de grupos frecuentes\n");
+        D.d(imprime(grupos_frecuentes));
 
         //Aquí ya deberíamos ser capaces de generar
         //de cada grupo de elementos todas las reglas posibles con su soporte y confianza
@@ -226,8 +226,8 @@ public class TDFPG {
         }
 
         //Imprimimos todos los subgrupos con sus soportes
-        System.out.append("Lista de subgrupos \n");
-        System.out.println(imprime(subgrupos));
+        D.d("Lista de subgrupos \n");
+        D.d(imprime(subgrupos));
 
         //después juntaremos los grupos idénticos y sumaremos sus soportes
         //primero convendría ordenarlos
@@ -235,8 +235,8 @@ public class TDFPG {
         Collections.sort(subgrupos, comp);
 
         //Imprimimos todos los subgrupos con sus soportes
-        System.out.append("Lista de subgrupos ordenados\n");
-        System.out.println(imprime(subgrupos));
+        D.d("Lista de subgrupos ordenados\n");
+        D.d(imprime(subgrupos));
 
         //después ir comprobando si uno y el siguiente son el mismo para ir reduciendo
         //y así evitar una comparación de todos con todos
@@ -270,8 +270,8 @@ public class TDFPG {
 
         //Aquí deberíamos tener los grupos únicos con sus respectivos soportes
         //Imprimimos todos los subgrupos con sus soportes
-        System.out.append("Lista de subgrupos sumados\n");
-        System.out.println(imprime(soporte_de_grupos));
+        D.d("Lista de subgrupos sumados\n");
+        D.d(imprime(soporte_de_grupos));
 
         //Ahora hay que generar las reglas y calcular su confianza
         //Para cada grupo frecuente, obtenemos todos sus subgrupos
@@ -314,8 +314,8 @@ public class TDFPG {
         }
 
         //Imprimimos las reglas con sus subgrupos vestidos (son sus soportes)
-        System.out.println("Reglas con soportes en los grupos");
-        System.out.println(imprime_reglas(reglas_totales));
+        D.d("Reglas con soportes en los grupos");
+        D.d(imprime_reglas(reglas_totales));
 
         //Ahora vamos a calcular la confianza de todas las reglas basada en los soportes de sus antecedentes y consecuentes
         for (Regla r : reglas_totales) {
@@ -323,8 +323,8 @@ public class TDFPG {
         }
 
         //Imprimimos las reglas con sus subgrupos vestidos (son sus soportes)
-        System.out.println("Reglas con soportes y estadísticas");
-        System.out.println(imprime_reglas(reglas_totales));       
+        D.d("Reglas con soportes y estadísticas");
+        D.d(imprime_reglas(reglas_totales));       
         
         //Devolvemos las reglas sin filtrar, ya las filtrará el cliente
         reglas = reglas_totales;
@@ -500,16 +500,16 @@ public class TDFPG {
         ArrayList<RegistroTD> tabla = new ArrayList<>();
 
         //Escribir la lista
-        System.out.println("Imprimiendo lista desordenada");
-        System.out.println(this.imprimir_lista(frecuencias));
+        D.d("Imprimiendo lista desordenada");
+        D.d(this.imprimir_lista(frecuencias));
 
 
         //Ordenar la lista por frecuencias
         Collections.sort(frecuencias, new ComparadorFreq());
 
         //Escribir la lista
-        System.out.println("Imprimiendo lista ordenada por soporte");
-        System.out.println(this.imprimir_lista(frecuencias));
+        D.d("Imprimiendo lista ordenada por soporte");
+        D.d(this.imprimir_lista(frecuencias));
 
         //Meter a lista en la tabla
         for (InfoElemento I : frecuencias) {
