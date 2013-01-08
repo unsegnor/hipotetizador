@@ -49,8 +49,8 @@ import java.util.Set;
  */
 public class Hipo {
 
-    int tventana = 3;
-    int thistoria = 100;//Integer.MAX_VALUE-1;
+    int tventana = 2;
+    int thistoria = 12;//Integer.MAX_VALUE-1;
     //Memoria a corto plazo
     boolean[][] ventana;
     //Memoria a medio plazo
@@ -116,8 +116,8 @@ public class Hipo {
             //Ventana de atención -> entradas a tener en cuenta, muestras a tener en cuenta a la vez, 
             //frecuencia de muestreo?? (por si queremos saltarnos algunas muestras)
             //deducir_reglas();
-            //this.TopDown(0f, 1f, 0.2f);//indicamos el umbral de soporte y el de confianza, el umbral de soporte en este momento no aporta beneficio alguno...
-            this.sinAmbiguedad(nentradas, tventana, historia, 0f, 1f);
+            this.TopDown(0f, 1f, 0.2f);//indicamos el umbral de soporte y el de confianza, el umbral de soporte en este momento no aporta beneficio alguno...
+            //this.sinAmbiguedad(nentradas, tventana, historia, 0f, 1f);
 
             //Reiniciar memorias a corto y medio plazo
             reiniciar_memorias();

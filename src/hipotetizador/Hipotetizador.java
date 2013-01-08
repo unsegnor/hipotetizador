@@ -34,7 +34,8 @@ public class Hipotetizador {
 
         //muestras_aleatorias(h,entradas);
         //muestras_secuenciales(h,entradas);
-        cuenta_hasta(h,entradas,4);
+        //cuenta_hasta(h,entradas,4);
+        inmediato(h);
     }
 
     public static void cuenta_hasta(Hipo h, int entradas, int num){
@@ -98,5 +99,51 @@ public class Hipotetizador {
             //Introducir muestra
             h.muestrear(muestra);
         }
+    }
+
+    private static void inmediato(Hipo h) {
+        
+        boolean[][] historia = {
+            {false}, 
+            {false}, 
+            {false}, 
+            {true}, 
+            {false}, 
+            {false}, 
+            {false}, 
+            {true}, 
+            {false}, 
+            {false}, 
+            {false}, 
+            {true}};
+            
+        
+               /* boolean[][] historia = {
+            {false, false, false, false, true, true}, 
+            {false, false, false, false, true, true}, 
+            {false, true, true, true, false, true}, 
+            {true, false, true, true, true, false}, 
+            {false, false, false, false, true, true}, 
+            {false, false, false, false, true, true}, 
+            {false, true, true, true, false, true}, 
+            {true, false, true, true, true, false}, 
+            {false, false, false, false, true, true}, 
+            {false, false, false, false, true, true}, 
+            {false, true, true, true, false, true}
+                };*/
+        boolean[] muestra;
+        
+        for(int i=0; i<historia.length; i++){
+            //Generar muestra
+            muestra = historia[i];
+
+            //Imprimir muestra
+            D.d(i + "-" + Muestras.imprimir_muestra(muestra));
+
+            //Introducir muestra
+            h.muestrear(muestra);
+        }
+        
+        
     }
 }
