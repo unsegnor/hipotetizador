@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * Top Down Frequent Pattern Growth
@@ -22,19 +23,16 @@ public class TDFPG {
     //ArrayList<RegistroTD> tabla = new ArrayList< >();
     //Esta función espera la lista de elementos filtrados por soporte mínimo
     //VOY A DESCOMPONERLA!!
-    public ArrayList<Regla> extraer_reglas(ArrayList<InfoElemento> frecuencias, boolean[][] historia, int tventana) {
+    public ArrayList<Regla> extraer_reglas(ArrayList<InfoElemento> tabla_frecuencias, boolean[][] historia, int tventana) {
         ArrayList<Regla> reglas = new ArrayList<>();
 
-        ArrayList<RegistroTD> tabla = inicializar_tabla(frecuencias);
+        ArrayList<RegistroTD> tabla = inicializar_tabla(tabla_frecuencias);
 
         //Obtenemos el ranking
         ArrayList<Elemento> ranking = new ArrayList<>();
         for (RegistroTD r : tabla) {
             ranking.add(r.getElemento());
         }
-
-        //Creamos el nodo raíz del árbol
-        Nodo padre = new Nodo();
 
         D.d("Ranking de elementos");
         D.d(showarray(ranking));
@@ -44,59 +42,8 @@ public class TDFPG {
         ArrayList<ArrayList<Elemento> > listas_elementos = hacer_listas(historia, tventana, ranking);
         
         //TODO hacer que se pueda llamar al algoritmo pasándole una listas ya hechas
-        for(ArrayList<Elemento> ordenados : listas_elementos){
-            Nodo nodo_actual = padre;
-            for (Elemento elem : ordenados) {
-                //Tenemos que generar una rama de este conjunto
-                //Buscamos un hijo del padre que sea igual que el nodo actual
-
-                Nodo nodo_hijo = null;
-                for (Nodo h : nodo_actual.getHijos()) {
-                    if (elem.equals(h.getElemento())) {
-                        nodo_hijo = h;
-                    }
-                }
-
-
-                //Si no existe lo añadimos con el nodo actual como padre y frecuencia 0 (en el constructor del nuevo nodo)
-                if (nodo_hijo == null) {
-                    nodo_hijo = new Nodo(elem, nodo_actual);
-                    nodo_actual.getHijos().add(nodo_hijo);
-
-                    //Cuando añadimos un nodo nuevo ampliamos la lista enlazada
-                    //Añadimos el enlace a la lista del registro correspondiente de la tabla
-                    //Buscamos el elemento correspondiente de la lista, usamos el ranking que es una copia para eso
-                    int registro = ranking.indexOf(elem);
-
-                    Nodo link = tabla.get(registro).getNodo();
-
-                    //Si es el primer nodo lo añadimos directamente
-                    if (link == null) {
-                        tabla.get(registro).setNodo(nodo_hijo);
-                    } else {
-                        //Sino tenemos que buscar el último nodo
-                        Nodo ultimo = link;
-                        while (link != null) {
-                            ultimo = link;
-                            link = ultimo.getSiguiente();
-                        }
-                        //En este momento tenemos que link es null y por tanto ultimo es el último nodo de la lista
-                        ultimo.setSiguiente(nodo_hijo);
-                    }
-                }
-
-                //En cualquier caso sumamos uno a la frecuencia del hijo
-                nodo_hijo.setFreq(nodo_hijo.getFreq() + 1);
-
-
-
-                //Actualizamos el nodo actual al hijo
-                nodo_actual = nodo_hijo;
-            }
-
-
-
-        }
+        
+        Nodo padre = construir_arbol(listas_elementos, tabla, ranking);
         //Aquí deberíamos tener el árbol construido
         D.d("Arbol construido");
         D.d(imprimir_arbol(padre, " ", true));
@@ -104,39 +51,9 @@ public class TDFPG {
 
         //A partir de aquí hay que empezar a formar los grupos desde abajo
         //Recorremos la tabla en orden inverso y vamos extrayendo subconjuntos a la vez que restamos uno a las frecuencias
-
-        ArrayList<GrupoElementos> grupos_frecuentes = new ArrayList<>();
-
-        for (int r = tabla.size() - 1; r >= 0; r--) {
-            RegistroTD reg = tabla.get(r);
-            Nodo atratar = reg.getNodo();
-
-            while (atratar != null) { //Hasta que se acabe la lista
-                //De quí saldrá un grupo nuevo
-                GrupoElementos grupo = new GrupoElementos();
-                Nodo n_anotar = atratar;
-
-                //Nos quedamos con la frecuencia del nodo
-                int freq = n_anotar.getFreq();
-                //Sólo seguimos si la frecuencia del nodo es mayor que cero
-                if (freq > 0) {
-
-                    Elemento e_anotar = n_anotar.getElemento();
-                    while (e_anotar != null) { //Hasta que lleguemos al nodo raíz cuyo elemento es null
-                        grupo.getElementos().add(e_anotar); //Añadimos el elemento al grupo
-                        grupo.setSoporte(freq); //Anotamos el soporte del grupo
-                        n_anotar.setFreq(n_anotar.getFreq() - freq); //Restamos el soporte que estamos contando (la dejamos a cero)
-                        n_anotar = n_anotar.getPadre(); //Nos movemos al nodo padre
-                        e_anotar = n_anotar.getElemento(); //Accedemos a su elemento
-                    }
-
-
-                    //Aquí ya tenemos el grupo relleno
-                    grupos_frecuentes.add(grupo); //Lo añadimos a la lista de grupos
-                }
-                atratar = atratar.getSiguiente();
-            }
-        }
+        
+        ArrayList<GrupoElementos> grupos_frecuentes = obtener_grupos_frecuentes(tabla);
+ 
         //Aquí deberíamos tener la lista de grupos frecuentes
         D.d("Lista de grupos frecuentes\n");
         D.d(imprime(grupos_frecuentes));
@@ -543,5 +460,111 @@ public class TDFPG {
             //Ahora a recorrerlos en orden y construir el árbol
         }
         return respuesta;
+    }
+
+    /**
+     * La tabla se modifica
+     * @param listas_elementos
+     * @param tabla
+     * @param ranking
+     * @return 
+     */
+    private Nodo construir_arbol(ArrayList<ArrayList<Elemento>> listas_elementos, ArrayList<RegistroTD> tabla, List<Elemento> ranking) {
+        
+        //Creamos el nodo raíz del árbol
+        Nodo padre = new Nodo();
+        
+        for(ArrayList<Elemento> ordenados : listas_elementos){
+            Nodo nodo_actual = padre;
+            for (Elemento elem : ordenados) {
+                //Tenemos que generar una rama de este conjunto
+                //Buscamos un hijo del padre que sea igual que el nodo actual
+
+                Nodo nodo_hijo = null;
+                for (Nodo h : nodo_actual.getHijos()) {
+                    if (elem.equals(h.getElemento())) {
+                        nodo_hijo = h;
+                    }
+                }
+
+
+                //Si no existe lo añadimos con el nodo actual como padre y frecuencia 0 (en el constructor del nuevo nodo)
+                if (nodo_hijo == null) {
+                    nodo_hijo = new Nodo(elem, nodo_actual);
+                    nodo_actual.getHijos().add(nodo_hijo);
+
+                    //Cuando añadimos un nodo nuevo ampliamos la lista enlazada
+                    //Añadimos el enlace a la lista del registro correspondiente de la tabla
+                    //Buscamos el elemento correspondiente de la lista, usamos el ranking que es una copia para eso
+                    int registro = ranking.indexOf(elem);
+
+                    Nodo link = tabla.get(registro).getNodo();
+
+                    //TODO efecto colateral, estamos modificando la tabla que se le pasa además de construir el árbol
+                    
+                    //Si es el primer nodo lo añadimos directamente
+                    if (link == null) {
+                        tabla.get(registro).setNodo(nodo_hijo);
+                    } else {
+                        //Sino tenemos que buscar el último nodo
+                        Nodo ultimo = link;
+                        while (link != null) {
+                            ultimo = link;
+                            link = ultimo.getSiguiente();
+                        }
+                        //En este momento tenemos que link es null y por tanto ultimo es el último nodo de la lista
+                        ultimo.setSiguiente(nodo_hijo);
+                    }
+                }
+
+                //En cualquier caso sumamos uno a la frecuencia del hijo
+                nodo_hijo.setFreq(nodo_hijo.getFreq() + 1);
+
+
+
+                //Actualizamos el nodo actual al hijo
+                nodo_actual = nodo_hijo;
+            }
+
+
+
+        }
+        return padre;
+    }
+
+    private ArrayList<GrupoElementos> obtener_grupos_frecuentes(ArrayList<RegistroTD> tabla) {
+        ArrayList<GrupoElementos> grupos_frecuentes = new ArrayList<>();
+        
+                for (int r = tabla.size() - 1; r >= 0; r--) {
+            RegistroTD reg = tabla.get(r);
+            Nodo atratar = reg.getNodo();
+
+            while (atratar != null) { //Hasta que se acabe la lista
+                //De quí saldrá un grupo nuevo
+                GrupoElementos grupo = new GrupoElementos();
+                Nodo n_anotar = atratar;
+
+                //Nos quedamos con la frecuencia del nodo
+                int freq = n_anotar.getFreq();
+                //Sólo seguimos si la frecuencia del nodo es mayor que cero
+                if (freq > 0) {
+
+                    Elemento e_anotar = n_anotar.getElemento();
+                    while (e_anotar != null) { //Hasta que lleguemos al nodo raíz cuyo elemento es null
+                        grupo.getElementos().add(e_anotar); //Añadimos el elemento al grupo
+                        grupo.setSoporte(freq); //Anotamos el soporte del grupo
+                        n_anotar.setFreq(n_anotar.getFreq() - freq); //Restamos el soporte que estamos contando (la dejamos a cero)
+                        n_anotar = n_anotar.getPadre(); //Nos movemos al nodo padre
+                        e_anotar = n_anotar.getElemento(); //Accedemos a su elemento
+                    }
+
+
+                    //Aquí ya tenemos el grupo relleno
+                    grupos_frecuentes.add(grupo); //Lo añadimos a la lista de grupos
+                }
+                atratar = atratar.getSiguiente();
+            }
+        }
+                return grupos_frecuentes;
     }
 }

@@ -371,8 +371,7 @@ public class Hipo {
         }
 
         //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
-        ArrayList<Regla> casos_ambiguos = new ArrayList<>();
-        casos_ambiguos = extraer_casos_ambiguos(todas_las_reglas);
+        ArrayList<Regla> casos_ambiguos = extraer_casos_ambiguos(todas_las_reglas);
 
         //Imprimimos los casos ambiguos
         D.d("Casos ambiguos");
@@ -380,7 +379,7 @@ public class Hipo {
 
 
         //Mientras haya casos ambiguos hacer
-        while(casos_ambiguos.size() > 0){
+        //while(casos_ambiguos.size() > 0){
         //Añadir entradas de casos ambiguos a la tabla
             //Necesitamos contar las frecuencias con las que se da cada caso
             //Para eso primero necesitamos una función que nos diga si un caso se da o no en un grupoElementos a analizar, que ya contiene todos los elementos de la ventana
@@ -402,7 +401,7 @@ public class Hipo {
         //Clasificar en certezas e hipótesis
 
         //Detectar y almacenar casos ambiguos
-        }
+        //}
         //fin_mientras
 
         //Elaborar Teoría con las certezas
