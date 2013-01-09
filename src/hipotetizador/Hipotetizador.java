@@ -25,9 +25,9 @@ public class Hipotetizador {
 
         //Activamos la depuración
         D.enabled = true;
-        
-        
-        int entradas = 1;
+
+
+        int entradas = 3;
         int ventana = 2;
 
         Hipo h = new Hipo(entradas, ventana);
@@ -38,19 +38,19 @@ public class Hipotetizador {
         inmediato(h);
     }
 
-    public static void cuenta_hasta(Hipo h, int entradas, int num){
-        
+    public static void cuenta_hasta(Hipo h, int entradas, int num) {
 
-        
+
+
         //Generar muestras aleatorias
         for (int i = 0; i < 100; i++) {
-            
-        //Muestra inicial
-        boolean[] muestra = new boolean[entradas];
 
-            if(i%num==0){
+            //Muestra inicial
+            boolean[] muestra = new boolean[entradas];
+
+            if (i % num == 0) {
                 muestra[0] = true;
-            }else{
+            } else {
                 muestra[0] = false;
             }
 
@@ -61,7 +61,7 @@ public class Hipotetizador {
             h.muestrear(muestra);
         }
     }
-    
+
     public static void muestras_aleatorias(Hipo h, int entradas) {
 
         //Generar muestras aleatorias
@@ -103,37 +103,38 @@ public class Hipotetizador {
 
     private static void inmediato(Hipo h) {
         
+        /* boolean[][] historia = {
+         {false},
+         {false},
+         {true},
+         {false},
+         {false},
+         {true},
+         {false},
+         {false},
+         {true},
+         {false},
+         {false},
+         {true}
+         };*/
+
+
         boolean[][] historia = {
-            {false}, 
-            {false}, 
-            {false}, 
-            {true}, 
-            {false}, 
-            {false}, 
-            {false}, 
-            {true}, 
-            {false}, 
-            {false}, 
-            {false}, 
-            {true}};
-            
-        
-               /* boolean[][] historia = {
-            {false, false, false, false, true, true}, 
-            {false, false, false, false, true, true}, 
-            {false, true, true, true, false, true}, 
-            {true, false, true, true, true, false}, 
-            {false, false, false, false, true, true}, 
-            {false, false, false, false, true, true}, 
-            {false, true, true, true, false, true}, 
-            {true, false, true, true, true, false}, 
-            {false, false, false, false, true, true}, 
-            {false, false, false, false, true, true}, 
-            {false, true, true, true, false, true}
-                };*/
+            {false, false, true},
+            {false, true, false},
+            {true, true, true},
+            {false, false, true},
+            {false, true, false},
+            {true, true, true},
+            {false, false, true},
+            {false, true, false},
+            {true, true, true},
+            {false, false, true},
+            {false, true, false}
+        };
         boolean[] muestra;
-        
-        for(int i=0; i<historia.length; i++){
+
+        for (int i = 0; i < historia.length; i++) {
             //Generar muestra
             muestra = historia[i];
 
@@ -143,7 +144,7 @@ public class Hipotetizador {
             //Introducir muestra
             h.muestrear(muestra);
         }
-        
-        
+
+
     }
 }

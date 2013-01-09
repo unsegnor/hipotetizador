@@ -50,7 +50,7 @@ import java.util.Set;
 public class Hipo {
 
     int tventana = 2;
-    int thistoria = 12;//Integer.MAX_VALUE-1;
+    int thistoria = 11;//Integer.MAX_VALUE-1;
     //Memoria a corto plazo
     boolean[][] ventana;
     //Memoria a medio plazo
@@ -381,21 +381,21 @@ public class Hipo {
         //Mientras haya casos ambiguos hacer
         //while(casos_ambiguos.size() > 0){
         //Añadir entradas de casos ambiguos a la tabla
-            //Necesitamos contar las frecuencias con las que se da cada caso
-            //Para eso primero necesitamos una función que nos diga si un caso se da o no en un grupoElementos a analizar, que ya contiene todos los elementos de la ventana
-            //Así que necesitamos los GrupoElementos para consultar, añadir y volver a deducir reglas sin tener que recorrer la historia entera
-            
-            //TODO también podría modificar la historia y volver a ejecutarlo todo (de momento hacerlo eficaz y más adelante eficiente)
-            
-                //Modificar la historia a partir de la historia original y obtener la historia ampliada
-                    //Hacer una matriz más grande, una entrada más por cada caso_ambiguo
-                    //Rellenar los valores de los casos ambiguos en función de si se cumple o no lo que dice el caso... no se puede, tiene que ser la historia ya extendida la que utilicemos
-                        //la tabla después de aplicar la ventana
-            
-                //Volver a hacer cuentas
-            
-                //Volver a calcular la tabla de la historia ampliada
-            
+        //Necesitamos contar las frecuencias con las que se da cada caso
+        //Para eso primero necesitamos una función que nos diga si un caso se da o no en un grupoElementos a analizar, que ya contiene todos los elementos de la ventana
+        //Así que necesitamos los GrupoElementos para consultar, añadir y volver a deducir reglas sin tener que recorrer la historia entera
+
+        //TODO también podría modificar la historia y volver a ejecutarlo todo (de momento hacerlo eficaz y más adelante eficiente)
+
+        //Modificar la historia a partir de la historia original y obtener la historia ampliada
+        //Hacer una matriz más grande, una entrada más por cada caso_ambiguo
+        //Rellenar los valores de los casos ambiguos en función de si se cumple o no lo que dice el caso... no se puede, tiene que ser la historia ya extendida la que utilicemos
+        //la tabla después de aplicar la ventana
+
+        //Volver a hacer cuentas
+
+        //Volver a calcular la tabla de la historia ampliada
+
         //Ejecutar TDFPG con la tabla más las nuevas entradas
 
         //Clasificar en certezas e hipótesis
@@ -489,7 +489,7 @@ public class Hipo {
         //Para esto no deben existir conflictos entre reglas (habrá que comprobarlo antes)
 
         //Deducir la siguiente línea
-        boolean[] siguiente = evaluar(historia[historia.length - 1], certezas);
+        int[] siguiente = evaluar(historia[historia.length - 1], certezas);
 
         D.d("Siguiente valor:");
         D.d(imprime_array(siguiente));
@@ -519,6 +519,17 @@ public class Hipo {
     }
 
     public String imprime_array(boolean[] array) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < array.length; i++) {
+            sb.append(array[i]).append(" ");
+        }
+
+
+        return sb.toString();
+    }
+
+    public String imprime_array(int[] array) {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < array.length; i++) {
@@ -682,6 +693,16 @@ public class Hipo {
         return respuesta;
     }
 
+    private int[] evaluar(boolean[] estado, ArrayList<Regla> reglas) {
+        int[] transformado = new int[estado.length];
+        //Convertir el estado en vector de int
+        for (int i = 0; i < estado.length; i++) {
+            transformado[i] = estado[i] ? 1 : 0;
+        }
+
+        return evaluar(transformado, reglas);
+    }
+
     /**
      * Evalúa un estado para devolve el estado siguiente según las reglas TODO
      * En realidad debería recibir y devolver una ventana
@@ -689,22 +710,33 @@ public class Hipo {
      * @param b
      * @return
      */
-    private boolean[] evaluar(boolean[] b, ArrayList<Regla> reglas) {
-        boolean[] respuesta = new boolean[b.length];
+    private int[] evaluar(int[] b, ArrayList<Regla> reglas) {
+        int[] contadores = new int[b.length];
+        int[] resultado = new int[b.length];
+
+        int[] respuesta = new int[b.length];
         //Recorrer las reglas a ver cuál se dispara
         for (Regla r : reglas) {
             boolean dispara = true;
-            for (Elemento e : r.getAntecedente().getElementos()) {
+            boolean alguna = false;
+            for (Elemento e : r.getAntecedente().getElementos()) {//TODO Debería salir en cuanto se sabe que no va a disparar
                 //TODO cambiar esto
                 //Sólo podemos utilizar la primera línea del antecedente para comparar
 
                 if (e.getSubindice() == 0) {
+                    alguna = true;
                     //Si no se cumple alguna de las entradas del antecedente -> no se dispara
-                    if (b[e.getEntrada()] != e.isVerdadero()) {
+                    //Si es una incógnita sí que se dispara
+                    if (b[e.getEntrada()] == 0 && e.isVerdadero()
+                            || b[e.getEntrada()] == 1 && !e.isVerdadero()) {
                         dispara = false;
                     }
+                }else{
+                    dispara = false; //No podemos dejar que se disparen las reglas que tienen en sus antecedentes variables de otros subíndices
                 }
             }
+            //Si hay alguna regla con subíndice 0 y dispara entonces dispara
+            dispara = dispara && alguna;
             //Si se dispara comprobamos el consecuente y lo escribimos en la respuesta
             if (dispara) {
                 for (Elemento e : r.getConsecuente().getElementos()) {
@@ -714,12 +746,41 @@ public class Hipo {
                     if (e.getSubindice() == 1) {
                         //Lo imprimimos en la respuesta ()
                         //TODO habría que comprobar si ya se había impreso otra cosa y hay conflicto entre las reglas, suponemos que no lo hay
-                        respuesta[e.getEntrada()] = e.isVerdadero();
+                        //respuesta[e.getEntrada()] = e.isVerdadero();
+                        contadores[e.getEntrada()]++; //Sumamos uno a los que han contribuido al resultado
+                        if (e.isVerdadero()) {
+                            resultado[e.getEntrada()]++; //Si es verdadero sumamos un voto
+                        } else {
+                            resultado[e.getEntrada()]--; //Si es falso restamos un voto
+                        }
                     }
 
                 }
             }
         }
+
+        //La respuesta se escribe si estaban todos de acuerdo, sino queda como incógnita
+        //0->false, 1->true, 2->hay contradicciones, 3->no hay reglas
+
+        for (int i = 0; i < b.length; i++) {
+            if (contadores[i] > 0) {
+                if (resultado[i] == contadores[i]) {
+                    //entonces estaban todas las reglas de acuerdo y es verdadero
+                    respuesta[i] = 1;
+                } else if (resultado[i] == -contadores[i]) {
+                    //Si el resultado es igual al negativo de los contadores es que
+                    //todas las reglas estaban de acuerdo y es falso
+                    respuesta[i] = 0;
+                } else {
+                    //En otro caso es que existen contradicciones entre las reglas
+                    respuesta[i] = 2;
+                }
+            } else {
+                //No se han disparado reglas para esta variable
+                respuesta[i] = 3;
+            }
+        }
+
         return respuesta;
     }
 

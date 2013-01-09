@@ -125,7 +125,7 @@ public class TDFPG {
         //así calculamos la confianza de cada posible relación
         ArrayList<Regla> reglas_totales = new ArrayList<Regla>();
         
-        /* Esto es lo que elabora reglas sólo de los subgrupos frecuentes
+  /*      // Esto es lo que elabora reglas sólo de los subgrupos frecuentes
         for (GrupoElementos g : grupos_frecuentes) {
             //Hacemos permutaciones de los subgrupos para generar reglas que después analizaremos
             ArrayList<Regla> reglas_de_g = this.generar_reglas(g);
