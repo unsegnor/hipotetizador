@@ -50,7 +50,7 @@ import java.util.Set;
 public class Hipo {
 
     int tventana = 2;
-    int thistoria = 11;//Integer.MAX_VALUE-1;
+    int thistoria = 12;//Integer.MAX_VALUE-1;
     //Memoria a corto plazo
     boolean[][] ventana;
     //Memoria a medio plazo
@@ -96,13 +96,12 @@ public class Hipo {
         //Contamos los unos (trues) que lleguen en cada posición
         anotar(ph, muestra);
 
-        /*Elementos clave que serán la entrada de muchas funciones
-         * - Historia
-         * - Ventana de atención: Filtro de entradas y longitud
-         * - Grupos frecuentes con soporte calculado
-         * - Subgrupos con soporte calculado
+        /*
+         * Elementos clave que serán la entrada de muchas funciones - Historia -
+         * Ventana de atención: Filtro de entradas y longitud - Grupos
+         * frecuentes con soporte calculado - Subgrupos con soporte calculado
          *
-         * 
+         *
          */
         ph++;
 
@@ -116,7 +115,7 @@ public class Hipo {
             //Ventana de atención -> entradas a tener en cuenta, muestras a tener en cuenta a la vez, 
             //frecuencia de muestreo?? (por si queremos saltarnos algunas muestras)
             //deducir_reglas();
-            this.TopDown(0f, 1f, 0.2f);//indicamos el umbral de soporte y el de confianza, el umbral de soporte en este momento no aporta beneficio alguno...
+            //this.TopDown(0f, 1f, 0.2f);//indicamos el umbral de soporte y el de confianza, el umbral de soporte en este momento no aporta beneficio alguno...
             //this.sinAmbiguedad(nentradas, tventana, historia, 0f, 1f);
 
             //Reiniciar memorias a corto y medio plazo
@@ -244,17 +243,17 @@ public class Hipo {
                 //Componer el nivel k a partir del anterior
                 //Componer todas las combinaciones que existen
 
-                /*  Realizar función tal que AB+BC+AC = ABC 
-                 *   AB+BC = nada
-                 *   ABC+ABD+ACD+BCD = ABCD
-                 *   Deben aparecer todas las permutaciones posibles del resultado para que sea válido
-                 *   AB -> es posible ABC, ABD, ABE...
-                 *   AE -> es más posible ABE
-                 *   BE -> ahora sí es posible ABE
-                 * 
-                 *   Parce fácil comprobar cuales de las posibles son realmente
-                 *   Cómo construir a partir de las que existen las posibles de una sola pasada.
-                 * 
+                /*
+                 * Realizar función tal que AB+BC+AC = ABC AB+BC = nada
+                 * ABC+ABD+ACD+BCD = ABCD Deben aparecer todas las permutaciones
+                 * posibles del resultado para que sea válido AB -> es posible
+                 * ABC, ABD, ABE... AE -> es más posible ABE BE -> ahora sí es
+                 * posible ABE
+                 *
+                 * Parce fácil comprobar cuales de las posibles son realmente
+                 * Cómo construir a partir de las que existen las posibles de
+                 * una sola pasada.
+                 *
                  */
 
                 //Componer ABC si existen AB, BC y AC
@@ -336,7 +335,7 @@ public class Hipo {
      * @param umbral_de_hipotesis
      * @param umbral_de_certeza
      */
-    private Teoria sinAmbiguedad(int nentradas, int long_ventana, boolean[][] la_historia, double umbral_de_hipotesis, double umbral_de_certeza) {
+    public Teoria sinAmbiguedad(int nentradas, int long_ventana, boolean[][] la_historia, double umbral_de_hipotesis, double umbral_de_certeza) {
         //Obtener la historia
         //Hacer las cuentas primera pasada
         //TODO crear clase CUENTAS
@@ -355,7 +354,7 @@ public class Hipo {
         TDFPG td = new TDFPG();
 
         //Ejecutar TDFPG y obtener las reglas
-        ArrayList<Regla> todas_las_reglas = td.extraer_reglas(tabla, historia, long_ventana);
+        ArrayList<Regla> todas_las_reglas = td.extraer_reglas(tabla, la_historia, long_ventana);
 
         //Clasificar las reglas en certezas e hipótesis
         ArrayList<Regla> certezas = new ArrayList<>();
@@ -378,7 +377,21 @@ public class Hipo {
         D.d(td.imprime_reglas(casos_ambiguos));
 
 
-        //Mientras haya casos ambiguos hacer
+        Teoria teoria = new Teoria();
+        
+        //Evaluar teoría
+        EvaluacionTeoria eval = evaluar_teoria(teoria, historia);
+        
+        //Dividir en dos cosas -> historia y estados_ocultos, que se juntan para evaluar
+        //los estados ocultos forman parte de la Teoria
+        
+        
+        
+        //Mientras haya casos ambiguos hacer (no es mientras haya casos ambiguos sino mientras la teoría no esté completa)
+        //También podemos hacerlo en función de si entendemos o no el contexto, lo que sucede, lo que no sucede no nos interesa
+        //Si somos capaces de deducir el siguiente estado es que entendemos lo que sucede
+        //hacemos esto hasta que somos capaces de explicar el X% de los estados para el Y% de las entradas, o en resumen poder explicar el Z% de lo percibido
+        //pero esto puede cambiar constantemente, la búsqueda, diversificación vs intensificación
         //while(casos_ambiguos.size() > 0){
         //Añadir entradas de casos ambiguos a la tabla
         //Necesitamos contar las frecuencias con las que se da cada caso
@@ -389,11 +402,15 @@ public class Hipo {
 
         //Modificar la historia a partir de la historia original y obtener la historia ampliada
         //Hacer una matriz más grande, una entrada más por cada caso_ambiguo
-        //Rellenar los valores de los casos ambiguos en función de si se cumple o no lo que dice el caso... no se puede, tiene que ser la historia ya extendida la que utilicemos
-        //la tabla después de aplicar la ventana
+        //Rellenar los valores de los casos ambiguos en función de si se cumple o no lo que dice el caso
+        boolean[][] nueva_historia = extender_historia(la_historia, casos_ambiguos, tventana);
 
+        //Imprimir la nueva historia
+        D.d("Nueva historia");
+        D.d(this.imprimir_historia(nueva_historia));
+        
         //Volver a hacer cuentas
-
+        
         //Volver a calcular la tabla de la historia ampliada
 
         //Ejecutar TDFPG con la tabla más las nuevas entradas
@@ -511,9 +528,10 @@ public class Hipo {
 
         //Leer estado para devolver el siguiente
 
-        /*InputStreamReader isr = new InputStreamReader(System.in);
-         BufferedReader bf = new BufferedReader (isr);
-         String lineaTeclado = bf.readLine();
+        /*
+         * InputStreamReader isr = new InputStreamReader(System.in);
+         * BufferedReader bf = new BufferedReader (isr); String lineaTeclado =
+         * bf.readLine();
          */
 
     }
@@ -571,7 +589,7 @@ public class Hipo {
 
         //Imprimir la historia.
         D.d("Historia hasta el momento-----------------------------");
-        D.d(imprimir_historia());
+        D.d(imprimir_historia(historia));
 
         //Imprimir cuentas
         D.d("Cuentas........................................");
@@ -597,11 +615,11 @@ public class Hipo {
         return sb.toString();
     }
 
-    private String imprimir_historia() {
+    private String imprimir_historia(boolean[][] la_historia) {
         StringBuilder sb = new StringBuilder();
 
-        for (int i = 0; i < historia.length; i++) {
-            boolean[] muestra = historia[i];
+        for (int i = 0; i < la_historia.length; i++) {
+            boolean[] muestra = la_historia[i];
             sb.append(Muestras.imprimir_muestra(muestra)).append("\n");
         }
 
@@ -731,7 +749,7 @@ public class Hipo {
                             || b[e.getEntrada()] == 1 && !e.isVerdadero()) {
                         dispara = false;
                     }
-                }else{
+                } else {
                     dispara = false; //No podemos dejar que se disparen las reglas que tienen en sus antecedentes variables de otros subíndices
                 }
             }
@@ -834,5 +852,83 @@ public class Hipo {
         }
 
         return respuesta;
+    }
+
+    /**
+     * Añade a la historia la evaluación de los casos ambiguos
+     *
+     * @param historia
+     * @param casos_ambiguos
+     * @return
+     */
+    private boolean[][] extender_historia(boolean[][] la_historia, ArrayList<Regla> casos_ambiguos, int t_ventana) {
+
+        //Longitud de la historia
+        int t_historia = la_historia.length;
+        //Longitud de la nueva historia
+        int t_nueva_historia = t_historia - (t_ventana -1);
+        //Número de entradas de la historia
+        int n_entradas = la_historia[0].length;
+        //Número de casos ambiguos
+        int n_casos = casos_ambiguos.size();
+        //Número total de entradas
+        int n_entradas_total = n_entradas + n_casos;
+
+        boolean[][] nueva_historia = new boolean[t_nueva_historia][n_entradas + n_casos];
+
+        //Rellenar la nueva historia con la historia antigua
+        for (int i = 0; i < t_nueva_historia; i++) {
+            for (int j = 0; j < n_entradas; j++) {
+                nueva_historia[i][j] = la_historia[i][j];
+            }
+        }
+
+        //Rellenar el resto d la historia con las evaluaciones de los casos ambiguos
+        for (int i = 0; i < t_nueva_historia; i++) {
+            //Evaluar para cada línea de la historia qué casos se cumplen
+            for (int j = n_entradas, c = 0; j < n_entradas_total && c < n_casos; j++, c++) {
+                //Caso a tratar
+                Regla caso = casos_ambiguos.get(c);
+
+                //Evaluar si el caso se cumple para la línea i de la historia antigua
+                ArrayList<Elemento> antecedente = caso.getAntecedente().getElementos();
+                ArrayList<Elemento> consecuente = caso.getConsecuente().getElementos();
+                //Si no se cumple el antecedente entonces la regla es cierta?????????
+                boolean reglaOK = true;
+                boolean antecedenteOK = true;
+                for (Elemento e : antecedente) {
+                    int entrada = e.getEntrada();
+                    int subindice = e.getSubindice();
+                    boolean verdadero = e.isVerdadero();
+
+                    //Si el momento de la historia al que apunta el elemento NO coincide con el valor del elemento sabemos que el antecedente no se cumple7
+                    if (la_historia[i + subindice][entrada] != verdadero) {
+                        antecedenteOK = false;
+                    }
+                }
+
+                //Si el antecedente coincide hay que comprobar que coincida el consecuente
+                if (antecedenteOK) {
+                    boolean consecuenteOK = true;
+                    for (Elemento e : consecuente) {
+                        int entrada = e.getEntrada();
+                        int subindice = e.getSubindice();
+                        boolean verdadero = e.isVerdadero();
+
+                        //Si el momento de la historia al que apunta el elemento NO coincide con el valor del elemento sabemos que el antecedente no se cumple7
+                        if (la_historia[i + subindice][entrada] != verdadero) {
+                            consecuenteOK = false;
+                        }
+                    }
+                    if (!consecuenteOK) {
+                        reglaOK = false;
+                    }
+                }
+
+                //Aquí sabemos si la regla se cumple o no con reglaOK
+                nueva_historia[i][j] = reglaOK;
+            }
+        }
+        return nueva_historia;
     }
 }
