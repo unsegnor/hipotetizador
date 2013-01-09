@@ -24,7 +24,7 @@ public class Hipotetizador {
         //TODO no dejar tan claros los subíndices, no deben expresar un instante fijo después, sino, un rato después, difuso
 
         //Activamos la depuración
-        D.enabled = true;
+        //D.enabled = true;
 
 
         int entradas = 1;
