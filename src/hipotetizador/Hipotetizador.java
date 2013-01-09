@@ -27,7 +27,7 @@ public class Hipotetizador {
         D.enabled = true;
 
 
-        int entradas = 3;
+        int entradas = 1;
         int ventana = 2;
 
         Hipo h = new Hipo(entradas, ventana);
@@ -35,7 +35,8 @@ public class Hipotetizador {
         //muestras_aleatorias(h,entradas);
         //muestras_secuenciales(h,entradas);
         //cuenta_hasta(h,entradas,4);
-        inmediato(h);
+        //inmediato(h);
+        historia_inmediata(h);
     }
 
     public static void cuenta_hasta(Hipo h, int entradas, int num) {
@@ -103,7 +104,7 @@ public class Hipotetizador {
 
     private static void inmediato(Hipo h) {
         
-        /* boolean[][] historia = {
+        boolean[][] historia = {
          {false},
          {false},
          {true},
@@ -116,10 +117,10 @@ public class Hipotetizador {
          {false},
          {false},
          {true}
-         };*/
+         };
 
 
-        boolean[][] historia = {
+       /* boolean[][] historia = {
             {false, false, true},
             {false, true, false},
             {true, true, true},
@@ -131,7 +132,10 @@ public class Hipotetizador {
             {true, true, true},
             {false, false, true},
             {false, true, false}
-        };
+        };*/
+        
+        
+        
         boolean[] muestra;
 
         for (int i = 0; i < historia.length; i++) {
@@ -144,7 +148,32 @@ public class Hipotetizador {
             //Introducir muestra
             h.muestrear(muestra);
         }
+        
 
 
+    }
+
+    private static void historia_inmediata(Hipo h) {
+        boolean[][] historia = {
+         {false},
+         {false},
+         {true},
+         {false},
+         {false},
+         {true},
+         {false},
+         {false},
+         {true},
+         {false},
+         {false},
+         {true}
+         };
+
+        int tventana = 2;
+        float umbral_de_hipotesis = 0.2f;
+        float umbral_de_certeza = 1f;
+        
+        
+        h.sinAmbiguedad(historia[0].length, tventana, historia, umbral_de_hipotesis, umbral_de_certeza);
     }
 }

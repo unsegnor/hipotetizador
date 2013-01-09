@@ -12,6 +12,20 @@ import java.util.ArrayList;
  */
 public class Teoria {
     
-    ArrayList<Regla> reglas;
+    private ArrayList<Regla> certezas;
+
+    /**
+     * @return the certezas
+     */
+    public ArrayList<Regla> getCertezas() {
+        return certezas;
+    }
+
+    /**
+     * @param certezas the certezas to set
+     */
+    public void setCertezas(ArrayList<Regla> certezas) {
+        this.certezas = certezas;
+    }
     
 }
