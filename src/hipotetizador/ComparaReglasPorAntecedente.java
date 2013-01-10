@@ -17,7 +17,14 @@ class ComparaReglasPorAntecedente implements Comparator<Regla>{
     
     @Override
     public int compare(Regla t, Regla t1) {
-        return comp.compare(t.getAntecedente(), t1.getAntecedente());
+        int respuesta = comp.compare(t.getAntecedente(), t1.getAntecedente());
+        
+        //Si los antecedentes son iguales entonces ordenamos por el consecuente
+        if(respuesta == 0){
+            respuesta = comp.compare(t.getConsecuente(), t1.getConsecuente());
+        }
+        
+        return respuesta;
     }
     
 }

@@ -24,7 +24,8 @@ public class Hipotetizador {
         //TODO no dejar tan claros los subíndices, no deben expresar un instante fijo después, sino, un rato después, difuso
 
         //Activamos la depuración
-        //D.enabled = true;
+        D.enabled = true;
+        D.level = 0;
 
 
         int entradas = 1;
@@ -107,13 +108,17 @@ public class Hipotetizador {
         boolean[][] historia = {
          {false},
          {false},
-         {true},
-         {false},
          {false},
          {true},
          {false},
          {false},
+         {false},
          {true},
+         {false},
+         {false},
+         {false},
+         {true},
+         {false},
          {false},
          {false},
          {true}
@@ -157,13 +162,17 @@ public class Hipotetizador {
         boolean[][] historia = {
          {false},
          {false},
-         {true},
-         {false},
          {false},
          {true},
          {false},
          {false},
+         {false},
          {true},
+         {false},
+         {false},
+         {false},
+         {true},
+         {false},
          {false},
          {false},
          {true}

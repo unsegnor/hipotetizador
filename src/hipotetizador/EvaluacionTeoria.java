@@ -22,6 +22,30 @@ class EvaluacionTeoria {
     int[] aciertos_muestras;
     int[] fallos_muestras;
 
+    //Explicabilidad
+    Float explicabilidad = null;
+    
+    
+    public void calcular_explicabilidad(){
+        //Hacemos la media de los aciertos por entrada
+        float media = 0;
+        for(int i=0; i<nentradas; i++){
+            media += aciertos_entradas[i];
+        }
+        
+        media = media / (float)(nentradas * nmuestras);
+        
+        explicabilidad = media;
+    }
+    
+    public float getExplicabilidad(){
+        if(explicabilidad != null) {
+            return explicabilidad;
+        }else{
+            return -1;
+        }
+    }
+    
     public String toString() {
         StringBuilder sb = new StringBuilder();
 

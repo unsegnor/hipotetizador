@@ -373,97 +373,100 @@ public class Hipo {
         ArrayList<Regla> casos_ambiguos = extraer_casos_ambiguos(todas_las_reglas);
 
         //Imprimimos los casos ambiguos
-        D.d("Casos ambiguos");
-        D.d(td.imprime_reglas(casos_ambiguos));
+        D.d(2,"Casos ambiguos");
+        D.d(2,td.imprime_reglas(casos_ambiguos));
 
 
         Teoria teoria = new Teoria();
         teoria.setCertezas(certezas);
-        
+
         //Evaluar teoría
-        EvaluacionTeoria eval = evaluar_teoria(teoria, historia);
-        
+        EvaluacionTeoria eval = evaluar_teoria(teoria, la_historia);
+
         //Imprimir evaluación de la teoría
-        System.out.println("Evaluación de la teoría");
-        System.out.println(eval.toString());
-        
+        D.d(2,"Evaluación de la teoría");
+        D.d(2,eval.toString());
+        D.d(2,"Explicabilidad: " + eval.getExplicabilidad());
+
         //Dividir en dos cosas -> historia y estados_ocultos, que se juntan para evaluar
         //los estados ocultos forman parte de la Teoria
-        
-        
-        
+
+
+
         //Mientras haya casos ambiguos hacer (no es mientras haya casos ambiguos sino mientras la teoría no esté completa)
         //También podemos hacerlo en función de si entendemos o no el contexto, lo que sucede, lo que no sucede no nos interesa
         //Si somos capaces de deducir el siguiente estado es que entendemos lo que sucede
         //hacemos esto hasta que somos capaces de explicar el X% de los estados para el Y% de las entradas, o en resumen poder explicar el Z% de lo percibido
         //pero esto puede cambiar constantemente, la búsqueda, diversificación vs intensificación
-        while(eval.aciertos_entradas[0] < 2){
-        //Añadir entradas de casos ambiguos a la tabla
-        //Necesitamos contar las frecuencias con las que se da cada caso
-        //Para eso primero necesitamos una función que nos diga si un caso se da o no en un grupoElementos a analizar, que ya contiene todos los elementos de la ventana
-        //Así que necesitamos los GrupoElementos para consultar, añadir y volver a deducir reglas sin tener que recorrer la historia entera
+        while (eval.getExplicabilidad() < 0.8f) {
+            //Añadir entradas de casos ambiguos a la tabla
+            //Necesitamos contar las frecuencias con las que se da cada caso
+            //Para eso primero necesitamos una función que nos diga si un caso se da o no en un grupoElementos a analizar, que ya contiene todos los elementos de la ventana
+            //Así que necesitamos los GrupoElementos para consultar, añadir y volver a deducir reglas sin tener que recorrer la historia entera
 
-        //TODO también podría modificar la historia y volver a ejecutarlo todo (de momento hacerlo eficaz y más adelante eficiente)
+            //TODO también podría modificar la historia y volver a ejecutarlo todo (de momento hacerlo eficaz y más adelante eficiente)
 
-        //Modificar la historia a partir de la historia original y obtener la historia ampliada
-        //Hacer una matriz más grande, una entrada más por cada caso_ambiguo
-        //Rellenar los valores de los casos ambiguos en función de si se cumple o no lo que dice el caso
-        boolean[][] nueva_historia = extender_historia(la_historia, casos_ambiguos, tventana);
+            //Modificar la historia a partir de la historia original y obtener la historia ampliada
+            //Hacer una matriz más grande, una entrada más por cada caso_ambiguo
+            //Rellenar los valores de los casos ambiguos en función de si se cumple o no lo que dice el caso
+            boolean[][] nueva_historia = extender_historia(la_historia, casos_ambiguos, tventana);
 
-        int n_entradas = nueva_historia.length;
-        
-        //Imprimir la nueva historia
-        D.d("Nueva historia");
-        D.d(this.imprimir_historia(nueva_historia));
-        
-        //Hacer las cuentas primera pasada
-        //TODO crear clase CUENTAS
-        primerScan = this.hacer_cuentas(nueva_historia, long_ventana);
+            int n_entradas = nueva_historia[0].length;
 
-        //Seleccionar las entradas que queremos tener en cuenta
-        //TODO crear clase SELECCION_DE_ENTRADAS
-        seleccion_de_entradas = new boolean[n_entradas];
-        Arrays.fill(seleccion_de_entradas, true);
+            //Imprimir la nueva historia
+            D.d(2,"Nueva historia");
+            D.d(2,this.imprimir_historia(nueva_historia));
 
-        //Elaborar la tabla para el TDFPG (extensible)
-        //TODO crear clase TABLA
-        tabla = this.elaborar_tabla(primerScan, 0, seleccion_de_entradas, long_ventana);
+            //Hacer las cuentas primera pasada
+            //TODO crear clase CUENTAS
+            primerScan = this.hacer_cuentas(nueva_historia, long_ventana);
 
-        //Ejecutar TDFPG y obtener las reglas
-        todas_las_reglas = td.extraer_reglas(tabla, nueva_historia, long_ventana);
+            //Seleccionar las entradas que queremos tener en cuenta
+            //TODO crear clase SELECCION_DE_ENTRADAS
+            seleccion_de_entradas = new boolean[n_entradas];
+            Arrays.fill(seleccion_de_entradas, true);
 
-        //Clasificar las reglas en certezas e hipótesis
-        certezas.clear();
-        hipotesis.clear();
+            //Elaborar la tabla para el TDFPG (extensible)
+            //TODO crear clase TABLA
+            tabla = this.elaborar_tabla(primerScan, 0, seleccion_de_entradas, long_ventana);
 
-        //Filtramos las reglas por el umbral de confianza
-        for (Regla r : todas_las_reglas) {
-            if (r.getConfianza() >= umbral_de_certeza) {
-                certezas.add(r);
-            } else if (r.getConfianza() >= umbral_de_hipotesis) {
-                hipotesis.add(r);
+            //Ejecutar TDFPG y obtener las reglas
+            todas_las_reglas = td.extraer_reglas(tabla, nueva_historia, long_ventana);
+
+            //Clasificar las reglas en certezas e hipótesis
+            certezas.clear();
+            hipotesis.clear();
+
+            //Filtramos las reglas por el umbral de confianza
+            for (Regla r : todas_las_reglas) {
+                if (r.getConfianza() >= umbral_de_certeza) {
+                    certezas.add(r);
+                } else if (r.getConfianza() >= umbral_de_hipotesis) {
+                    hipotesis.add(r);
+                }
             }
+
+            //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
+            casos_ambiguos = extraer_casos_ambiguos(todas_las_reglas);
+
+            //Imprimimos los casos ambiguos
+            D.d(2,"Casos ambiguos");
+            D.d(2,td.imprime_reglas(casos_ambiguos));
+
+            teoria.setCertezas(certezas);
+
+            //Evaluar teoría
+            eval = evaluar_teoria(teoria, nueva_historia);
+            eval.calcular_explicabilidad();
+
+            //Imprimir evaluación de la teoría
+            D.d(2,"Evaluación de la teoría");
+            D.d(2,eval.toString());
+            D.d(2,"Explicabilidad: " + eval.getExplicabilidad());
+
+            //Volver a hacer cuentas
+            la_historia = nueva_historia;
         }
-
-        //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
-        casos_ambiguos = extraer_casos_ambiguos(todas_las_reglas);
-
-        //Imprimimos los casos ambiguos
-        D.d("Casos ambiguos");
-        D.d(td.imprime_reglas(casos_ambiguos));
-
-        teoria.setCertezas(certezas);
-        
-        //Evaluar teoría
-        eval = evaluar_teoria(teoria, nueva_historia);
-        
-        //Imprimir evaluación de la teoría
-        System.out.println("Evaluación de la teoría");
-        System.out.println(eval.toString());
-        
-        //Volver a hacer cuentas
-        la_historia = nueva_historia;
-    }
         //Volver a calcular la tabla de la historia ampliada
 
         //Ejecutar TDFPG con la tabla más las nuevas entradas
@@ -919,7 +922,7 @@ public class Hipo {
         //Longitud de la historia
         int t_historia = la_historia.length;
         //Longitud de la nueva historia
-        int t_nueva_historia = t_historia - (t_ventana -1);
+        int t_nueva_historia = t_historia - (t_ventana - 1);
         //Número de entradas de la historia
         int n_entradas = la_historia[0].length;
         //Número de casos ambiguos
@@ -984,73 +987,75 @@ public class Hipo {
         }
         return nueva_historia;
     }
-/**
- * Evalua una teoría.
- * @param teoria
- * @param la_historia
- * @return La evaluación de la teoría.
- */
+
+    /**
+     * Evalua una teoría.
+     *
+     * @param teoria
+     * @param la_historia
+     * @return La evaluación de la teoría.
+     */
     private EvaluacionTeoria evaluar_teoria(Teoria teoria, boolean[][] la_historia) {
         EvaluacionTeoria r = new EvaluacionTeoria();
-        
+
         ArrayList<Regla> reglas = teoria.getCertezas();
-        
+
         int nentradas = la_historia[0].length;
         int t_historia = la_historia.length;
-        
+
         int[] aciertos_entradas = new int[nentradas];
         int[] fallos_entradas = new int[nentradas];
         int[] aciertos_muestras = new int[t_historia];
         int[] fallos_muestras = new int[t_historia];
-        
+
         //Recorremos la historia comprobando y tomando nota de cuántos pasos es capaz de explicar la teoría
         //TODO Deberíamos fijarnos sólo en las entradas originales, pero de momento nos fijamos en todas
         //más adelante pasaremos separada la historia de los estados extra
-        
-        for(int h=0; h<t_historia-1; h++){ //-1 para que no se salga ya que comprueba cada muestra con la siguiente para evaluar la predicción
+
+        for (int h = 0; h < t_historia - 1; h++) { //-1 para que no se salga ya que comprueba cada muestra con la siguiente para evaluar la predicción
             boolean[] muestra = la_historia[h];
-            
+
             //Para cada muestra evaluar el estado siguiente con la teoría
             int[] siguiente = this.evaluar(muestra, reglas);
-            
-            
+
+
             //Comprobar aciertos con la siguiente
-            boolean[] muestra_siguiente = la_historia[h+1];
-            
-            
-            for(int i=0; i<nentradas; i++){
-                if(siguiente[i] == 1){
-                    if(muestra_siguiente[i]){
+            boolean[] muestra_siguiente = la_historia[h + 1];
+
+
+            for (int i = 0; i < nentradas; i++) {
+                if (siguiente[i] == 1) {
+                    if (muestra_siguiente[i]) {
                         //ACIERTO!
                         aciertos_entradas[i]++;
-                        aciertos_muestras[h]++;
-                    }else{
+                        aciertos_muestras[h+1]++;
+                    } else {
                         //FALLO!
                         fallos_entradas[i]++;
-                        fallos_muestras[h]++;
+                        fallos_muestras[h+1]++;
                     }
-                }else if(siguiente[i] == 0){
-                    if(!muestra_siguiente[i]){
+                } else if (siguiente[i] == 0) {
+                    if (!muestra_siguiente[i]) {
                         //ACIERTO!!
                         aciertos_entradas[i]++;
-                        aciertos_muestras[h]++;
+                        aciertos_muestras[h+1]++;
                     }
-                }else if(siguiente[i] == 2){ //El 2 indica Contradicción!
+                } else if (siguiente[i] == 2) { //El 2 indica Contradicción!
                     //FALLO!
                     fallos_entradas[i]++;
-                    fallos_muestras[h]++;
+                    fallos_muestras[h+1]++;
                 }
             }
         }
-        
+
         //Rellenamos la respuesta
         r.nentradas = nentradas;
-        r.nmuestras = t_historia;
+        r.nmuestras = t_historia-1; //No contamos una de las muestras porque sólo podemos evaluar los pasos que son uno menos
         r.aciertos_entradas = aciertos_entradas;
         r.aciertos_muestras = aciertos_muestras;
         r.fallos_entradas = fallos_entradas;
         r.fallos_muestras = fallos_muestras;
-        
+
         return r;
     }
 }
