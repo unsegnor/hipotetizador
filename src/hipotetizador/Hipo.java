@@ -398,7 +398,7 @@ public class Hipo {
         //Si somos capaces de deducir el siguiente estado es que entendemos lo que sucede
         //hacemos esto hasta que somos capaces de explicar el X% de los estados para el Y% de las entradas, o en resumen poder explicar el Z% de lo percibido
         //pero esto puede cambiar constantemente, la búsqueda, diversificación vs intensificación
-        while (eval.getExplicabilidad() < 0.8f) {
+        while (eval.getExplicabilidad() < 0.5f) {
             //Añadir entradas de casos ambiguos a la tabla
             //Necesitamos contar las frecuencias con las que se da cada caso
             //Para eso primero necesitamos una función que nos diga si un caso se da o no en un grupoElementos a analizar, que ya contiene todos los elementos de la ventana
@@ -450,8 +450,8 @@ public class Hipo {
             casos_ambiguos = extraer_casos_ambiguos(todas_las_reglas);
 
             //Imprimimos los casos ambiguos
-            D.d(2,"Casos ambiguos");
-            D.d(2,td.imprime_reglas(casos_ambiguos));
+            D.d(1,"Casos ambiguos");
+            D.d(1,td.imprime_reglas(casos_ambiguos));
 
             teoria.setCertezas(certezas);
 
@@ -467,17 +467,15 @@ public class Hipo {
             //Volver a hacer cuentas
             la_historia = nueva_historia;
         }
-        //Volver a calcular la tabla de la historia ampliada
 
-        //Ejecutar TDFPG con la tabla más las nuevas entradas
-
-        //Clasificar en certezas e hipótesis
-
-        //Detectar y almacenar casos ambiguos
-        //}
-        //fin_mientras
-
-        //Elaborar Teoría con las certezas
+        //Aquí tenemos una teoría que puede explicar
+        //Calculamos los siguientes valores
+        int[] siguiente = this.evaluar(la_historia[la_historia.length-1], teoria.getCertezas());
+        D.d(2,this.imprime_array(siguiente));
+        for(int i=0; i<10; i++){
+            siguiente = this.evaluar(siguiente, teoria.getCertezas());
+            D.d(2,this.imprime_array(siguiente));
+        }
 
         //Devolver la teoría que explica la historia
 
