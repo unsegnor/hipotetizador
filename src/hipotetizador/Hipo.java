@@ -335,7 +335,7 @@ public class Hipo {
      * @param umbral_de_hipotesis
      * @param umbral_de_certeza
      */
-    public Teoria sinAmbiguedad(int nentradas, int long_ventana, boolean[][] la_historia, double umbral_de_hipotesis, double umbral_de_certeza) {
+    public Teoria sinAmbiguedad(int nentradas, int long_ventana, boolean[][] la_historia, double umbral_de_hipotesis, double umbral_de_certeza, float umbral_explicabilidad) {
         //Obtener la historia
         //Hacer las cuentas primera pasada
         //TODO crear clase CUENTAS
@@ -398,7 +398,7 @@ public class Hipo {
         //Si somos capaces de deducir el siguiente estado es que entendemos lo que sucede
         //hacemos esto hasta que somos capaces de explicar el X% de los estados para el Y% de las entradas, o en resumen poder explicar el Z% de lo percibido
         //pero esto puede cambiar constantemente, la búsqueda, diversificación vs intensificación
-        while (eval.getExplicabilidad() < 0.5f) {
+        while (eval.getExplicabilidad() < umbral_explicabilidad) {
             //Añadir entradas de casos ambiguos a la tabla
             //Necesitamos contar las frecuencias con las que se da cada caso
             //Para eso primero necesitamos una función que nos diga si un caso se da o no en un grupoElementos a analizar, que ya contiene todos los elementos de la ventana
@@ -479,7 +479,7 @@ public class Hipo {
 
         //Devolver la teoría que explica la historia
 
-        return null;
+        return teoria;
     }
 
     //Con cada historia buscamos nuevas hipótesis y desmentimos o confirmamos las que ya teníamos.

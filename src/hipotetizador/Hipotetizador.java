@@ -43,7 +43,20 @@ public class Hipotetizador {
         //cuenta_hasta(h,entradas,4);
         //inmediato(h);
         //historia_inmediata(h);
-        serie_numerica(h);
+        //serie_numerica(h);
+        float[][] resultados = determinar_confianza_minima(h);
+        
+    }
+    
+    public String imprimir_resultados(float[][] resultados){
+        StringBuilder sb = new StringBuilder();
+        
+        //Imprimir los resultados
+        for(float[] r:resultados){
+            sb.append(r[0]).append('\t').append(r[1]).append('\t').append(r[2]).append('\n');
+        }
+        
+        return sb.toString();
     }
 
     public static void cuenta_hasta(Hipo h, int entradas, int num) {
@@ -183,9 +196,9 @@ public class Hipotetizador {
         int tventana = 2;
         float umbral_de_hipotesis = 0.2f;
         float umbral_de_certeza = 1f;
+        float umbral_de_explicabilidad = 0.2f;
         
-        
-        h.sinAmbiguedad(historia[0].length, tventana, historia, umbral_de_hipotesis, umbral_de_certeza);
+        h.sinAmbiguedad(historia[0].length, tventana, historia, umbral_de_hipotesis, umbral_de_certeza, umbral_de_explicabilidad);
     }
 
     private static void serie_numerica(Hipo h) throws IOException {
@@ -234,8 +247,81 @@ public class Hipotetizador {
         int tventana = 2;
         float umbral_de_hipotesis = 0.2f;
         float umbral_de_certeza = 1f;
+        float umbral_explicabilidad = 0.8f;
         
         
-        h.sinAmbiguedad(historia[0].length, tventana, historia, umbral_de_hipotesis, umbral_de_certeza);
+        h.sinAmbiguedad(historia[0].length, tventana, historia, umbral_de_hipotesis, umbral_de_certeza, umbral_explicabilidad);
+    }
+
+    private static float[][] determinar_confianza_minima(Hipo h) {
+        
+        //Ir generando una historia aleatoria, ir añadiendo muestras a la historia e ir anotando la confianza de las reglas que se generan
+        //con esto hacer un gráfico para comoprobar cómo varía y qué reglas se pueden descartar.
+        //Variar la historia en longitud y una vez conseguida una buena longitud también en anchura (número de entradas)
+        
+        ArrayList<boolean[]> historia = new ArrayList<>();
+        
+        
+        int nentradas = 3;
+        int long_ventana = 2;
+        int max_h = 10;
+        float umbral_de_hipotesis = 0f;
+        float umbral_de_certeza = 0f; //Para meterlas todas en certezas
+        float umbral_de_explicabilidad = -100f; //Para ejecutarlo una sola vez
+        
+        historia.add(Muestras.aleatoria(nentradas));
+        
+        float[][] resultados = new float[max_h][3]; //Anotamos el máximo, el mínimo y la media
+        //Lo hacemos max_h veces
+        for(int i=0; i<max_h; i++){
+            int long_h = i+1;
+            
+            //Generamos una muestra más de la historia aleatoria
+            boolean[] muestra = Muestras.aleatoria(nentradas);
+            historia.add(muestra);
+            
+            //Pasamos la historia a array
+            boolean[][] a_historia = historia.toArray(new boolean[historia.size()][]);
+            
+            //Mandamos el array a ser analizado y recibimos la teoría que lo explica
+            Teoria teoria = h.sinAmbiguedad(nentradas, long_ventana, a_historia, umbral_de_hipotesis, umbral_de_certeza, umbral_de_explicabilidad);
+            
+            //Calculamos las medidas de las reglas que obtenemos
+            //Mínimo, máximo, media
+            float maxconf = 0;
+            float minconf = Float.MAX_VALUE;
+            float mediaconf = 0;
+            
+            for(Regla r:teoria.getCertezas()){
+                float conf = (float) r.getConfianza();
+                
+                maxconf = Math.max(conf, maxconf);
+                
+                minconf = Math.min(conf, minconf);
+                
+                mediaconf += conf;
+            }
+            
+            mediaconf = mediaconf / (float) long_h;
+            
+            //Anotar los resultados
+            resultados[i][0] = maxconf;
+            resultados[i][1] = mediaconf;
+            resultados[i][2] = minconf;
+        }
+        
+        return resultados;
+    }
+
+    private static boolean[][] addmuestra(boolean[][] historia, boolean[] muestra, int nentradas) {
+        int t_historia = historia.length;
+        
+        //Generamos la nueva historia con una línea más
+        boolean[][] respuesta = new boolean[t_historia+1][nentradas];
+        
+        //
+        
+        
+        return respuesta;
     }
 }
