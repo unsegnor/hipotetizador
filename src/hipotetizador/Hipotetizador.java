@@ -29,7 +29,7 @@ public class Hipotetizador {
         //TODO no dejar tan claros los subíndices, no deben expresar un instante fijo después, sino, un rato después, difuso
 
         //Activamos la depuración
-        D.enabled = true;
+        D.enabled = false;
         D.level = 2;
 
 
@@ -44,18 +44,22 @@ public class Hipotetizador {
         //inmediato(h);
         //historia_inmediata(h);
         //serie_numerica(h);
+        //System.out.println(Integer.MAX_VALUE);
         float[][] resultados = determinar_confianza_minima(h);
-        
+
+        //System.out.println("Resultados");
+        //System.out.println(imprimir_resultados(resultados));
+
     }
-    
-    public String imprimir_resultados(float[][] resultados){
+
+    public static String imprimir_resultados(float[][] resultados) {
         StringBuilder sb = new StringBuilder();
-        
+
         //Imprimir los resultados
-        for(float[] r:resultados){
-            sb.append(r[0]).append('\t').append(r[1]).append('\t').append(r[2]).append('\n');
+        for (float[] r : resultados) {
+            sb.append(r[3]).append('\t').append(r[0]).append('\t').append(r[1]).append('\t').append(r[2]).append('\n');
         }
-        
+
         return sb.toString();
     }
 
@@ -123,43 +127,37 @@ public class Hipotetizador {
     }
 
     private static void inmediato(Hipo h) {
-        
+
         boolean[][] historia = {
-         {false},
-         {false},
-         {false},
-         {true},
-         {false},
-         {false},
-         {false},
-         {true},
-         {false},
-         {false},
-         {false},
-         {true},
-         {false},
-         {false},
-         {false},
-         {true}
-         };
+            {false},
+            {false},
+            {false},
+            {true},
+            {false},
+            {false},
+            {false},
+            {true},
+            {false},
+            {false},
+            {false},
+            {true},
+            {false},
+            {false},
+            {false},
+            {true}
+        };
 
 
-       /* boolean[][] historia = {
-            {false, false, true},
-            {false, true, false},
-            {true, true, true},
-            {false, false, true},
-            {false, true, false},
-            {true, true, true},
-            {false, false, true},
-            {false, true, false},
-            {true, true, true},
-            {false, false, true},
-            {false, true, false}
-        };*/
-        
-        
-        
+        /*
+         * boolean[][] historia = { {false, false, true}, {false, true, false},
+         * {true, true, true}, {false, false, true}, {false, true, false},
+         * {true, true, true}, {false, false, true}, {false, true, false},
+         * {true, true, true}, {false, false, true}, {false, true, false}
+        };
+         */
+
+
+
         boolean[] muestra;
 
         for (int i = 0; i < historia.length; i++) {
@@ -172,156 +170,205 @@ public class Hipotetizador {
             //Introducir muestra
             h.muestrear(muestra);
         }
-        
+
 
 
     }
 
     private static void historia_inmediata(Hipo h) {
         boolean[][] historia = {
-         {false},
-         {false},
-         {true},
-         {false},
-         {false},
-         {true},
-         {false},
-         {false},
-         {true},
-         {false},
-         {false},
-         {true}
-         };
+            {false},
+            {false},
+            {true},
+            {false},
+            {false},
+            {true},
+            {false},
+            {false},
+            {true},
+            {false},
+            {false},
+            {true}
+        };
 
         int tventana = 2;
         float umbral_de_hipotesis = 0.2f;
         float umbral_de_certeza = 1f;
         float umbral_de_explicabilidad = 0.2f;
-        
+
         h.sinAmbiguedad(historia[0].length, tventana, historia, umbral_de_hipotesis, umbral_de_certeza, umbral_de_explicabilidad);
     }
 
     private static void serie_numerica(Hipo h) throws IOException {
-        
+
         InputStreamReader isr = new InputStreamReader(System.in);
-        BufferedReader bf = new BufferedReader (isr);
-        
+        BufferedReader bf = new BufferedReader(isr);
+
         //Obtener input en una sola línea separado por espacios
         System.out.println("Introducir serie numérica en una sola línea separada por espacios");
         String linea = bf.readLine();
-        
+
         //Separar la entrada por espacios
         String[] s_num = linea.split(" ");
-        
+
         //Convertir los números en binario
         String[] s_bin = new String[s_num.length];
         //Almacenamos la longitud máxima
         int maxlength = 0;
-        for(int i=0; i<s_num.length; i++){
+        for (int i = 0; i < s_num.length; i++) {
             s_bin[i] = Integer.toBinaryString(Integer.parseInt(s_num[i]));
             maxlength = Math.max(maxlength, s_bin[i].length());
         }
-        
+
         //La longitud máxima es el número de entradas
         int nentradas = maxlength;
         //La cantidad de números es el tamaño de la historia
         int t_historia = s_bin.length;
-        
+
         //Componemos la historia
         boolean[][] historia = new boolean[t_historia][nentradas];
         //Para cada línea de la historia
-        for(int i=0; i<t_historia; i++){
+        for (int i = 0; i < t_historia; i++) {
             //Leemos la cadena binaria correspondiente
             String c_bin = s_bin[i];
             int l = c_bin.length();
             //Vamos rellenando la historia hasta donde lleguemos
-            for(int j=0; j<l; j++){
-                historia[i][j] = c_bin.charAt(j)=='0'?false:true;
+            for (int j = 0; j < l; j++) {
+                historia[i][j] = c_bin.charAt(j) == '0' ? false : true;
             }
             //Después llenamos el resto de ceros
-            for(int j=l; j<nentradas; j++){
+            for (int j = l; j < nentradas; j++) {
                 historia[i][j] = false;
             }
-        }              
+        }
 
         int tventana = 2;
         float umbral_de_hipotesis = 0.2f;
         float umbral_de_certeza = 1f;
         float umbral_explicabilidad = 0.8f;
-        
-        
+
+
         h.sinAmbiguedad(historia[0].length, tventana, historia, umbral_de_hipotesis, umbral_de_certeza, umbral_explicabilidad);
     }
 
     private static float[][] determinar_confianza_minima(Hipo h) {
-        
+
         //Ir generando una historia aleatoria, ir añadiendo muestras a la historia e ir anotando la confianza de las reglas que se generan
         //con esto hacer un gráfico para comoprobar cómo varía y qué reglas se pueden descartar.
         //Variar la historia en longitud y una vez conseguida una buena longitud también en anchura (número de entradas)
-        
+
         ArrayList<boolean[]> historia = new ArrayList<>();
-        
-        
+
+
         int nentradas = 3;
         int long_ventana = 2;
-        int max_h = 10;
+        int max_h = 100;
         float umbral_de_hipotesis = 0f;
         float umbral_de_certeza = 0f; //Para meterlas todas en certezas
         float umbral_de_explicabilidad = -100f; //Para ejecutarlo una sola vez
-        
+
         historia.add(Muestras.aleatoria(nentradas));
-        
-        float[][] resultados = new float[max_h][3]; //Anotamos el máximo, el mínimo y la media
+
+        float[][] resultados = new float[max_h][4]; //Anotamos el máximo, el mínimo y la media
         //Lo hacemos max_h veces
-        for(int i=0; i<max_h; i++){
-            int long_h = i+1;
-            
-            //Generamos una muestra más de la historia aleatoria
-            boolean[] muestra = Muestras.aleatoria(nentradas);
-            historia.add(muestra);
-            
-            //Pasamos la historia a array
-            boolean[][] a_historia = historia.toArray(new boolean[historia.size()][]);
-            
-            //Mandamos el array a ser analizado y recibimos la teoría que lo explica
-            Teoria teoria = h.sinAmbiguedad(nentradas, long_ventana, a_historia, umbral_de_hipotesis, umbral_de_certeza, umbral_de_explicabilidad);
-            
-            //Calculamos las medidas de las reglas que obtenemos
-            //Mínimo, máximo, media
-            float maxconf = 0;
-            float minconf = Float.MAX_VALUE;
-            float mediaconf = 0;
-            
-            for(Regla r:teoria.getCertezas()){
-                float conf = (float) r.getConfianza();
+        for (int i = 0; i < Integer.MAX_VALUE && i < (Integer.MAX_VALUE / 1000000); i++) {
+            int long_h = i + 1;
+            //int long_h = 500;
+
+            float maxconf2 = 0;
+            float minconf2 = 0;
+            float mediaconf2 = 0;
+
+            int jteraciones = 1; //Vecees que repetimos la medida con el mismo tamaño de historia para sacar medias
+
+            for (int j = 0; j < jteraciones; j++) {
+
+                /*//Generamos una muestra más de la historia aleatoria
+                boolean[] muestra = Muestras.aleatoria(nentradas);
+                historia.add(muestra);
+
+                //Pasamos la historia a array
+                boolean[][] a_historia = historia.toArray(new boolean[historia.size()][]);
+
+                //Mandamos el array a ser analizado y recibimos la teoría que lo explica
+                Teoria teoria = h.sinAmbiguedad(nentradas, long_ventana, a_historia, umbral_de_hipotesis, umbral_de_certeza, umbral_de_explicabilidad);
+*/
+                //long_ventana = i+1;
+                //nentradas = i +1;
+                //Generamos una historia nueva aleatoria
+                boolean[][] a_historia = historia_aleatoria(nentradas,long_h);
+                Teoria teoria = h.sinAmbiguedad(nentradas, long_ventana, a_historia, umbral_de_hipotesis, umbral_de_certeza, umbral_de_explicabilidad);
                 
-                maxconf = Math.max(conf, maxconf);
+                //Calculamos las medidas de las reglas que obtenemos
+                //Mínimo, máximo, media
+                float maxconf = 0;
+                float minconf = Float.MAX_VALUE;
+                float mediaconf = 0;
+
+                ArrayList<Regla> reglas = teoria.getCertezas();
+                int l = reglas.size();
+                //System.out.print(long_h);
+                int k=0;
+                for (int c=0; c<l && k<1000000; c++) {
+                    Regla r = reglas.get(c);
+                    k++;
+                    float conf = (float) r.getConfianza();
+
+                    maxconf = Math.max(conf, maxconf);
+
+                    minconf = Math.min(conf, minconf);
+
+                    mediaconf += conf;
+                    
+                    System.out.println(long_h * 1000000 + k + "\t" + r.getConfianza());
+                }
                 
-                minconf = Math.min(conf, minconf);
+                //System.out.print("\n");
+
+                mediaconf = mediaconf / (float) teoria.getCertezas().size();
+
+                //Anotar los resultados
+                //resultados[i][0] = maxconf;
+                //resultados[i][1] = mediaconf;
+                //resultados[i][2] = minconf;
+                //resultados[i][3] = long_h;
                 
-                mediaconf += conf;
+                maxconf2 += maxconf;
+                minconf2 += minconf;
+                mediaconf2 += mediaconf;
+                
             }
+
+            maxconf2 = maxconf2 / (float) jteraciones;
+            minconf2 = minconf2 / (float) jteraciones;
+            mediaconf2 = mediaconf2 / (float) jteraciones;
             
-            mediaconf = mediaconf / (float) long_h;
-            
-            //Anotar los resultados
-            resultados[i][0] = maxconf;
-            resultados[i][1] = mediaconf;
-            resultados[i][2] = minconf;
+            //System.out.println(nentradas + "\t" + maxconf2 + "\t" + mediaconf2 + "\t" + minconf2);
         }
-        
+
         return resultados;
     }
 
     private static boolean[][] addmuestra(boolean[][] historia, boolean[] muestra, int nentradas) {
         int t_historia = historia.length;
-        
+
         //Generamos la nueva historia con una línea más
-        boolean[][] respuesta = new boolean[t_historia+1][nentradas];
-        
+        boolean[][] respuesta = new boolean[t_historia + 1][nentradas];
+
         //
-        
-        
+
+
+        return respuesta;
+    }
+
+    private static boolean[][] historia_aleatoria(int nentradas, int longitud) {
+        boolean[][] respuesta = new boolean[longitud][];
+
+        //Rellenar con muestras aleatorias
+        for (int i = 0; i < longitud; i++) {
+            respuesta[i] = Muestras.aleatoria(nentradas);
+        }
+
         return respuesta;
     }
 }
