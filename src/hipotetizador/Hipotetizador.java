@@ -29,8 +29,8 @@ public class Hipotetizador {
         //TODO no dejar tan claros los subíndices, no deben expresar un instante fijo después, sino, un rato después, difuso
 
         //Activamos la depuración
-        D.enabled = false;
-        D.level = 2;
+        D.enabled = true;
+        D.level = 1;
 
 
         int entradas = 1;
@@ -43,9 +43,9 @@ public class Hipotetizador {
         //cuenta_hasta(h,entradas,4);
         //inmediato(h);
         //historia_inmediata(h);
-        //serie_numerica(h);
+        serie_numerica(h);
         //System.out.println(Integer.MAX_VALUE);
-        float[][] resultados = determinar_confianza_minima(h);
+        //float[][] resultados = determinar_confianza_minima(h);
 
         //System.out.println("Resultados");
         //System.out.println(imprimir_resultados(resultados));
@@ -234,7 +234,7 @@ public class Hipotetizador {
             int l = c_bin.length();
             //Vamos rellenando la historia hasta donde lleguemos
             for (int j = 0; j < l; j++) {
-                historia[i][j] = c_bin.charAt(j) == '0' ? false : true;
+                historia[i][j] = c_bin.charAt((l-1)-j) == '0' ? false : true;
             }
             //Después llenamos el resto de ceros
             for (int j = l; j < nentradas; j++) {
@@ -248,7 +248,7 @@ public class Hipotetizador {
         float umbral_explicabilidad = 0.8f;
 
 
-        h.sinAmbiguedad(historia[0].length, tventana, historia, umbral_de_hipotesis, umbral_de_certeza, umbral_explicabilidad);
+        h.sinAmbiguedad(nentradas, tventana, historia, umbral_de_hipotesis, umbral_de_certeza, umbral_explicabilidad);
     }
 
     private static float[][] determinar_confianza_minima(Hipo h) {
@@ -271,13 +271,15 @@ public class Hipotetizador {
 
         float[][] resultados = new float[max_h][4]; //Anotamos el máximo, el mínimo y la media
         //Lo hacemos max_h veces
-        for (int i = 0; i < Integer.MAX_VALUE && i < (Integer.MAX_VALUE / 1000000); i++) {
+        for (int i = 0; i < Integer.MAX_VALUE; i+=1000) {
             int long_h = i + 1;
             //int long_h = 500;
 
             float maxconf2 = 0;
             float minconf2 = 0;
             float mediaconf2 = 0;
+            
+            int maxReglas = 1000000000;
 
             int jteraciones = 1; //Vecees que repetimos la medida con el mismo tamaño de historia para sacar medias
 
@@ -309,7 +311,7 @@ public class Hipotetizador {
                 int l = reglas.size();
                 //System.out.print(long_h);
                 int k=0;
-                for (int c=0; c<l && k<1000000; c++) {
+                for (int c=0; c<l && k<maxReglas; c++) {
                     Regla r = reglas.get(c);
                     k++;
                     float conf = (float) r.getConfianza();
@@ -320,7 +322,9 @@ public class Hipotetizador {
 
                     mediaconf += conf;
                     
-                    System.out.println(long_h * 1000000 + k + "\t" + r.getConfianza());
+                    long num = (long)long_h * (long)maxReglas + (long)k;
+                    
+                    System.out.println(num + "\t" + r.getConfianza());
                 }
                 
                 //System.out.print("\n");

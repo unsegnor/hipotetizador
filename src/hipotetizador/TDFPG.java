@@ -135,6 +135,8 @@ public class TDFPG {
         
         //QUESTION ¿Se hace así? ¿Se conforman las reglas para todos los subgrupos de un grupo frecuente? ¿O sólo B = X-A? ¿Por qué? ¿Diferencias?...
         //En lugar de eso vamos a calcular las reglas a partir de los subgrupos de los grupos frecuentes
+        
+        /*
         for(GrupoElementos g:grupos_frecuentes){
             //Obtenemos sus subgrupos
             ArrayList<GrupoElementos> gs = g.getLastSubgrupos(); //Obtenemos los que ya han sido calculados
@@ -146,10 +148,17 @@ public class TDFPG {
                 reglas_totales.addAll(reglas_de_sub);
             }
         }
+        */
+        
+        //Vamos a generar las reglas a partir de los grupos con soporte directamente
+        for(GrupoElementos g:soporte_de_grupos){
+            //Para cada subgrupo posible sacamos las reglas que puede haber con él
+            reglas_totales.addAll(this.generar_reglas(g));
+        }
 
         //Ahora tenemos todas las reglas deducibles en reglas_totales
         //vamos a consultar el soporte de los grupos que las componen y a anotárselo
-
+// Sí que es necesario CREO QUE ESTO YA NO ES NECESARIO PORQUE ENLAZAMOS DIRECTAMENTE LAS REGLAS CON LOS GRUPOS
         for (Regla r : reglas_totales) {
             //Buscar el antecedente en la lista de soporte_grupos
             int i_antecedente = soporte_de_grupos.indexOf(r.getAntecedente());

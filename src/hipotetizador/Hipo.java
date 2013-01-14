@@ -336,7 +336,18 @@ public class Hipo {
      * @param umbral_de_certeza
      */
     public Teoria sinAmbiguedad(int nentradas, int long_ventana, boolean[][] la_historia, double umbral_de_hipotesis, double umbral_de_certeza, float umbral_explicabilidad) {
+
+        //Comaparador de regla por bondad
+        ComparaReglasBondad comp = new ComparaReglasBondad();
+
+        float umbral_ruido = 0.4f;
+
         //Obtener la historia
+
+        //Imprimir la historia
+        D.d(2, "Historia");
+        D.d(2, this.imprimir_historia(la_historia));
+
         //Hacer las cuentas primera pasada
         //TODO crear clase CUENTAS
         Par<Long, Long>[][] primerScan = this.hacer_cuentas(la_historia, long_ventana);
@@ -360,6 +371,8 @@ public class Hipo {
         ArrayList<Regla> certezas = new ArrayList<>();
         ArrayList<Regla> hipotesis = new ArrayList<>();
 
+        ArrayList<Regla> sin_ruido = new ArrayList<>();
+
         //Filtramos las reglas por el umbral de confianza
         for (Regla r : todas_las_reglas) {
             if (r.getConfianza() >= umbral_de_certeza) {
@@ -367,14 +380,20 @@ public class Hipo {
             } else if (r.getConfianza() >= umbral_de_hipotesis) {
                 hipotesis.add(r);
             }
+            if (r.getConfianza() >= umbral_ruido) {
+                sin_ruido.add(r);
+            }
         }
 
         //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
-        ArrayList<Regla> casos_ambiguos = extraer_casos_ambiguos(todas_las_reglas);
+        ArrayList<Regla> casos_ambiguos = extraer_casos_ambiguos(sin_ruido);
+
+        //Ordenamos los casos ambiguos por bondad
+        Collections.sort(casos_ambiguos, comp);
 
         //Imprimimos los casos ambiguos
-        D.d(2,"Casos ambiguos");
-        D.d(2,td.imprime_reglas(casos_ambiguos));
+        D.d(1, "Casos ambiguos");
+        D.d(1, td.imprime_reglas(casos_ambiguos));
 
 
         Teoria teoria = new Teoria();
@@ -383,10 +402,12 @@ public class Hipo {
         //Evaluar teoría
         EvaluacionTeoria eval = evaluar_teoria(teoria, la_historia);
 
+        eval.calcular_explicabilidad();
+
         //Imprimir evaluación de la teoría
-        D.d(2,"Evaluación de la teoría");
-        D.d(2,eval.toString());
-        D.d(2,"Explicabilidad: " + eval.getExplicabilidad());
+        D.d(2, "Evaluación de la teoría");
+        D.d(2, eval.toString());
+        D.d(2, "Explicabilidad: " + eval.getExplicabilidad());
 
         //Dividir en dos cosas -> historia y estados_ocultos, que se juntan para evaluar
         //los estados ocultos forman parte de la Teoria
@@ -409,13 +430,18 @@ public class Hipo {
             //Modificar la historia a partir de la historia original y obtener la historia ampliada
             //Hacer una matriz más grande, una entrada más por cada caso_ambiguo
             //Rellenar los valores de los casos ambiguos en función de si se cumple o no lo que dice el caso
-            boolean[][] nueva_historia = extender_historia(la_historia, casos_ambiguos, tventana);
+
+            //Escogemos los n casos ambiguos mejor valorados
+            int n = 1;
+            ArrayList<Regla> mejores_casos_ambiguos = new ArrayList<>(casos_ambiguos.subList(0, n));
+
+            boolean[][] nueva_historia = extender_historia(la_historia, mejores_casos_ambiguos, tventana);
 
             int n_entradas = nueva_historia[0].length;
 
             //Imprimir la nueva historia
-            D.d(2,"Nueva historia");
-            D.d(2,this.imprimir_historia(nueva_historia));
+            D.d(2, "Nueva historia");
+            D.d(2, this.imprimir_historia(nueva_historia));
 
             //Hacer las cuentas primera pasada
             //TODO crear clase CUENTAS
@@ -444,14 +470,17 @@ public class Hipo {
                 } else if (r.getConfianza() >= umbral_de_hipotesis) {
                     hipotesis.add(r);
                 }
+                if (r.getConfianza() >= umbral_ruido) { //Escoger las reglas que más se acerquen a 0.5 en confianza o que más información puedan dar según la fórmula de la cantidad de información
+                    sin_ruido.add(r);
+                }
             }
 
             //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
-            casos_ambiguos = extraer_casos_ambiguos(todas_las_reglas);
+            casos_ambiguos = extraer_casos_ambiguos(sin_ruido);
 
             //Imprimimos los casos ambiguos
-            D.d(1,"Casos ambiguos");
-            D.d(1,td.imprime_reglas(casos_ambiguos));
+            D.d(1, "Casos ambiguos");
+            D.d(1, td.imprime_reglas(casos_ambiguos));
 
             teoria.setCertezas(certezas);
 
@@ -460,9 +489,9 @@ public class Hipo {
             eval.calcular_explicabilidad();
 
             //Imprimir evaluación de la teoría
-            D.d(2,"Evaluación de la teoría");
-            D.d(2,eval.toString());
-            D.d(2,"Explicabilidad: " + eval.getExplicabilidad());
+            D.d(2, "Evaluación de la teoría");
+            D.d(2, eval.toString());
+            D.d(2, "Explicabilidad: " + eval.getExplicabilidad());
 
             //Volver a hacer cuentas
             la_historia = nueva_historia;
@@ -470,11 +499,11 @@ public class Hipo {
 
         //Aquí tenemos una teoría que puede explicar
         //Calculamos los siguientes valores
-        int[] siguiente = this.evaluar(la_historia[la_historia.length-1], teoria.getCertezas());
-        D.d(2,this.imprime_array(siguiente));
-        for(int i=0; i<10; i++){
+        int[] siguiente = this.evaluar(la_historia[la_historia.length - 1], teoria.getCertezas());
+        D.d(2, this.imprime_array(siguiente));
+        for (int i = 0; i < 10; i++) {
             siguiente = this.evaluar(siguiente, teoria.getCertezas());
-            D.d(2,this.imprime_array(siguiente));
+            D.d(2, this.imprime_array(siguiente));
         }
 
         //Devolver la teoría que explica la historia
@@ -846,12 +875,44 @@ public class Hipo {
                 } else {
                     //En otro caso es que existen contradicciones entre las reglas
                     respuesta[i] = 2;
+                    //Lo hacemos por votación
+                    if (resultado[i] > 0) {
+                        respuesta[i] = 1;
+                    } else if (resultado[i] < 0) {
+                        respuesta[i] = 0;
+                    }
+
                 }
             } else {
                 //No se han disparado reglas para esta variable
                 respuesta[i] = 3;
             }
         }
+
+        return respuesta;
+    }
+
+    /**
+     * Devolver la forma más sencilla de explicar lo sucedido
+     *
+     * @param b
+     * @param reglas
+     * @return
+     */
+    private int[] evaluar_sencilla(int[] b, ArrayList<Regla> reglas) {
+        int[] contadores = new int[b.length];
+        int[] resultado = new int[b.length];
+
+        int[] respuesta = new int[b.length];
+        //Recorrer las reglas a ver cuál se dispara, ordenarlas por confianza y después por impacto y después por longitud
+
+        ArrayList<Regla> aux = new ArrayList<>(reglas);
+
+        ComparaReglasBondad comp = new ComparaReglasBondad();
+
+        Collections.sort(aux, comp);
+
+        //Para cada elemento de la respuesta buscamos una regla que lo contenga en el consecuente
 
         return respuesta;
     }
@@ -1026,29 +1087,29 @@ public class Hipo {
                     if (muestra_siguiente[i]) {
                         //ACIERTO!
                         aciertos_entradas[i]++;
-                        aciertos_muestras[h+1]++;
+                        aciertos_muestras[h + 1]++;
                     } else {
                         //FALLO!
                         fallos_entradas[i]++;
-                        fallos_muestras[h+1]++;
+                        fallos_muestras[h + 1]++;
                     }
                 } else if (siguiente[i] == 0) {
                     if (!muestra_siguiente[i]) {
                         //ACIERTO!!
                         aciertos_entradas[i]++;
-                        aciertos_muestras[h+1]++;
+                        aciertos_muestras[h + 1]++;
                     }
                 } else if (siguiente[i] == 2) { //El 2 indica Contradicción!
                     //FALLO!
                     fallos_entradas[i]++;
-                    fallos_muestras[h+1]++;
+                    fallos_muestras[h + 1]++;
                 }
             }
         }
 
         //Rellenamos la respuesta
         r.nentradas = nentradas;
-        r.nmuestras = t_historia-1; //No contamos una de las muestras porque sólo podemos evaluar los pasos que son uno menos
+        r.nmuestras = t_historia - 1; //No contamos una de las muestras porque sólo podemos evaluar los pasos que son uno menos
         r.aciertos_entradas = aciertos_entradas;
         r.aciertos_muestras = aciertos_muestras;
         r.fallos_entradas = fallos_entradas;
