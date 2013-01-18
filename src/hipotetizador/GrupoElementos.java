@@ -75,7 +75,7 @@ public class GrupoElementos {
         
         //Recorremos los elementos del grupo y vamos anotando unos o ceros
         for(Elemento e: elementos){           
-                m[e.subindice][e.entrada] = e.verdadero?1:0;
+                m[e.getSubindice()][e.getEntrada()] = e.isVerdadero()?1:0;
         }
         
         //Generamos la matriz de tventana x tentradas en un string
