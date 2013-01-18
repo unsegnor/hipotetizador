@@ -16,9 +16,11 @@ public class ComparaReglasBondad implements Comparator<Regla>{
     public int compare(Regla t, Regla t1) {
         int respuesta = 0;
         
+        //Comapramos por confianza, mayor -> mejor
+        respuesta = Double.compare(t1.getConfianza(), t.getConfianza());
+        
         //Comparamos por cantidad de información, mayor primero
-        //respuesta = Double.compare(t1.getConfianza(), t.getConfianza());
-        respuesta = Double.compare(t1.getCantidad_de_informacion(), t.getCantidad_de_informacion());
+        //respuesta = Double.compare(t1.getCantidad_de_informacion(), t.getCantidad_de_informacion());
         
         
         

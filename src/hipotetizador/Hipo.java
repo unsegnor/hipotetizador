@@ -335,6 +335,10 @@ public class Hipo {
      * @param umbral_de_hipotesis
      * @param umbral_de_certeza
      */
+    
+    //TODO implementar algoritmo greedy para seleccionar los bits que nos inventaremos
+    //TODO ir probando con los diferentes casos y ver el aumento de explicabilidad que conseguimos
+    //guardar en una tabla las características de la regla y el aumento de explicabilidad conseguido a ver si vemos la regla
     public Teoria sinAmbiguedad(int nentradas, int long_ventana, boolean[][] la_historia, double umbral_de_hipotesis, double umbral_de_certeza, float umbral_explicabilidad) {
 
         //Comaparador de regla por bondad
@@ -913,6 +917,7 @@ public class Hipo {
         Collections.sort(aux, comp);
 
         //Para cada elemento de la respuesta buscamos una regla que lo contenga en el consecuente
+        
 
         return respuesta;
     }
