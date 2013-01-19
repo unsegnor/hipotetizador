@@ -173,4 +173,49 @@ public class GrupoElementos {
 
         return (compG.compare(this, otro) == 0);
     }
+    /**
+     * Indica si el Grupo this está contenido en el grupo e
+     * @param e
+     * @return 
+     */
+    boolean contenido_en(GrupoElementos e) {
+        return contenido_en(this,e);
+    }
+    /**
+     * Indica si el grupo A está contenido en B. Si B contiene a A
+     * @param a
+     * @param b
+     * @return 
+     */
+    boolean contenido_en(GrupoElementos a, GrupoElementos b){
+        //Si B contiene a A tendrá todos los elementos de A
+        //Recorremos entonces los elementos de A si falta alguno es que no lo contiene
+        //Primero ordenamos los dos grupos
+        
+        a.ordenar();
+        b.ordenar();
+        
+        ArrayList<Elemento> Aordenado = a.getElementos();
+        ArrayList<Elemento> Bordenado = b.getElementos();
+        
+        
+        boolean respuesta = true;
+        int Bi=0;
+        int lA = Aordenado.size();
+        int lB = Bordenado.size();
+        
+        for(int Ai=0; Ai<lA && Bi<lB; Ai++){
+            //Para cada elemento de A buscamos su igual en B
+            //hacer hasta que se encuentre el elemento igual en B o se acabe B
+            
+            while(Bi<lB && !Aordenado.get(Ai).equals(Bordenado.get(Bi))){
+                //Si hemos llegado al final de B aquí es que el último no era igual y por lo tanto algún elemento de A no se encuentra en B
+                if(Bi==lB-1){
+                    respuesta = false;
+                }
+                Bi++;
+            }
+        }
+        return respuesta;
+    }
 }

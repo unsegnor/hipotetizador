@@ -30,7 +30,7 @@ public class Hipotetizador {
 
         //Activamos la depuración
         D.enabled = true;
-        D.level = 1;
+        D.level = 3;
 
 
         int entradas = 1;
@@ -49,6 +49,8 @@ public class Hipotetizador {
 
         //System.out.println("Resultados");
         //System.out.println(imprimir_resultados(resultados));
+        
+        //comunidad_cientifica();
 
     }
 
@@ -195,8 +197,9 @@ public class Hipotetizador {
         float umbral_de_hipotesis = 0.2f;
         float umbral_de_certeza = 1f;
         float umbral_de_explicabilidad = 0.2f;
+        boolean generar_subreglas = true;
 
-        h.sinAmbiguedad(historia[0].length, tventana, historia, umbral_de_hipotesis, umbral_de_certeza, umbral_de_explicabilidad);
+        h.sinAmbiguedad(historia[0].length, tventana, historia, umbral_de_hipotesis, umbral_de_certeza, umbral_de_explicabilidad, generar_subreglas);
     }
 
     private static void serie_numerica(Hipo h) throws IOException {
@@ -243,12 +246,49 @@ public class Hipotetizador {
         }
 
         int tventana = 2;
-        float umbral_de_hipotesis = 0.2f;
+        float umbral_de_hipotesis = 0.5f;
         float umbral_de_certeza = 1f;
         float umbral_explicabilidad = 0.8f;
+        float umbral_de_ruido = 0.1f;
+        float umbral_de_soporte = 0.1f;
+        boolean generar_subreglas = true;
 
-
-        h.sinAmbiguedad(nentradas, tventana, historia, umbral_de_hipotesis, umbral_de_certeza, umbral_explicabilidad);
+                //Mostrar la historia
+        System.out.println("Historia");
+        D.d(3,h.imprimir_historia(historia));
+        
+        //Elaboramos una teoría para la historia
+        Teoria teoria = h.elaborar_teoria(historia, nentradas, tventana, umbral_de_certeza, umbral_de_hipotesis, umbral_de_ruido, umbral_de_soporte, generar_subreglas);
+             
+        //Imprimimos la teoría
+        D.d(2,"Teoría");
+        D.d(2, teoria.toString());
+        
+        //Intentamos rellenar una historia incompleta
+        //Elaborar la historia incompleta       
+        //Número de ejemplos
+        int nejemplos = 2;
+        //Número de casos incompletos
+        int nincompletos = 10;
+        
+        float[][] historia_incompleta = h.elaborar_historia_futura(historia, nejemplos, nincompletos);
+        
+        //Mostrar la historia incompleta
+        System.out.println("Historia incompleta");
+        D.d(3,h.imprimir_historia(historia_incompleta));
+        
+        //Rellenar la historia incompleta con la teoría
+        float[][] prediccion = h.rellenar_historia(historia_incompleta, teoria);
+        
+        //Mostrar la predicción
+        System.out.println("Predicción");
+        D.d(3,h.imprimir_historia(prediccion));
+        
+        //Convertir la predicción a números
+        for(int i=0; i<prediccion.length; i++){
+            System.out.print(Numeros.vectorAbinario(prediccion[i]));
+            System.out.print(" ");
+        }
     }
 
     private static float[][] determinar_confianza_minima(Hipo h) {
@@ -266,6 +306,7 @@ public class Hipotetizador {
         float umbral_de_hipotesis = 0f;
         float umbral_de_certeza = 0f; //Para meterlas todas en certezas
         float umbral_de_explicabilidad = -100f; //Para ejecutarlo una sola vez
+        boolean generar_subreglas = false;
 
         historia.add(Muestras.aleatoria(nentradas));
 
@@ -299,7 +340,7 @@ public class Hipotetizador {
                 //nentradas = i +1;
                 //Generamos una historia nueva aleatoria
                 boolean[][] a_historia = historia_aleatoria(nentradas,long_h);
-                Teoria teoria = h.sinAmbiguedad(nentradas, long_ventana, a_historia, umbral_de_hipotesis, umbral_de_certeza, umbral_de_explicabilidad);
+                Teoria teoria = h.sinAmbiguedad(nentradas, long_ventana, a_historia, umbral_de_hipotesis, umbral_de_certeza, umbral_de_explicabilidad, false);
                 
                 //Calculamos las medidas de las reglas que obtenemos
                 //Mínimo, máximo, media
@@ -374,5 +415,20 @@ public class Hipotetizador {
         }
 
         return respuesta;
+    }
+
+    private static void comunidad_cientifica() {
+        
+        
+        
+        //Crear científicos
+        
+        //Obtener historia
+        
+        //Poner científicos a trabajar en explicar la historia mientras vamos almacenando la mejor teoría
+        
+        //Devolver la mejor teoría
+        
+        
     }
 }
