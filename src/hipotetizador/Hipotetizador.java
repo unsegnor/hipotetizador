@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  *
@@ -43,7 +44,7 @@ public class Hipotetizador {
         //cuenta_hasta(h,entradas,4);
         //inmediato(h);
         //historia_inmediata(h);
-        serie_numerica(h);
+        //serie_numerica(h);
         //System.out.println(Integer.MAX_VALUE);
         //float[][] resultados = determinar_confianza_minima(h);
 
@@ -51,6 +52,7 @@ public class Hipotetizador {
         //System.out.println(imprimir_resultados(resultados));
         
         //comunidad_cientifica();
+        contexto_oculto(h);
 
     }
 
@@ -419,8 +421,6 @@ public class Hipotetizador {
 
     private static void comunidad_cientifica() {
         
-        
-        
         //Crear científicos
         
         //Obtener historia
@@ -429,6 +429,118 @@ public class Hipotetizador {
         
         //Devolver la mejor teoría
         
+    }
+
+    private static void contexto_oculto(Hipo h) throws IOException {
+        InputStreamReader isr = new InputStreamReader(System.in);
+        BufferedReader bf = new BufferedReader(isr);
+
+        //Obtener input en una sola línea separado por espacios
+        System.out.println("Introducir serie numérica en una sola línea separada por espacios");
+        String linea = bf.readLine();
+
+        //Separar la entrada por espacios
+        String[] s_num = linea.split(" ");
+
+        //Convertir los números en binario
+        String[] s_bin = new String[s_num.length];
+        //Almacenamos la longitud máxima
+        int maxlength = 0;
+        for (int i = 0; i < s_num.length; i++) {
+            s_bin[i] = Integer.toBinaryString(Integer.parseInt(s_num[i]));
+            maxlength = Math.max(maxlength, s_bin[i].length());
+        }
+
+        //La longitud máxima es el número de entradas
+        int nentradas = maxlength;
+        //La cantidad de números es el tamaño de la historia
+        int t_historia = s_bin.length;
+
+        //Componemos la historia
+        boolean[][] historia = new boolean[t_historia][nentradas];
+        //Para cada línea de la historia
+        for (int i = 0; i < t_historia; i++) {
+            //Leemos la cadena binaria correspondiente
+            String c_bin = s_bin[i];
+            int l = c_bin.length();
+            //Vamos rellenando la historia hasta donde lleguemos
+            for (int j = 0; j < l; j++) {
+                historia[i][j] = c_bin.charAt((l-1)-j) == '0' ? false : true;
+            }
+            //Después llenamos el resto de ceros
+            for (int j = l; j < nentradas; j++) {
+                historia[i][j] = false;
+            }
+        }
+
+        int tventana = 2;
+        float umbral_de_hipotesis = 0.1f;
+        float umbral_de_certeza = 1f;
+        float umbral_explicabilidad = 0.8f;
+        float umbral_de_ruido = 0.1f;
+        float umbral_de_soporte = 0.1f;
+        boolean generar_subreglas = true;
+
+        //Mostrar la historia
+        System.out.println("Historia");
+        D.d(3,h.imprimir_historia(historia));
         
+        //Elaboramos una teoría para la historia
+        Teoria teoria = h.elaborar_teoria(historia, nentradas, tventana, umbral_de_certeza, umbral_de_hipotesis, umbral_de_ruido, umbral_de_soporte, generar_subreglas);
+        
+        //Reducimos la teoría
+        //teoria = h.reducir_teoria(teoria);
+        
+        //TODO Buscar determinar cuándo la teoría está completa.
+        //Aún siendo capaz de continuar la serie 123123 siguen habiendo contradicciones
+        //Algunas quizá se puedan reducir comparándolas con las certezas
+        
+        //Evaluamos la teoría, buscamos contradicciones
+        ArrayList<Contradiccion> contradicciones = h.buscar_contradicciones(teoria);
+        
+        //Ordenamos las contradicciones
+        Collections.sort(contradicciones,new ComparaContradiccionesPorUtilidad());
+        
+        //Las añadimos a la teoría
+        teoria.setContradicciones(contradicciones);
+        
+        //Imprimimos las contradicciones
+        D.d("Contradicciones");
+        for(Contradiccion c:contradicciones){
+            D.d(3, c.toString());
+        }
+        
+        //Mejorar la teoría a partir de las contradicciones encontradas
+            //Bucle
+        
+        //Imprimimos la teoría
+        D.d(3,"Teoría");
+        D.d(3, teoria.toString());
+        
+        //Intentamos rellenar una historia incompleta
+        //Elaborar la historia incompleta       
+        //Número de ejemplos
+        int nejemplos = 2;
+        //Número de casos incompletos
+        int nincompletos = 10;
+        
+        float[][] historia_incompleta = h.elaborar_historia_futura(historia, nejemplos, nincompletos);
+        
+        //Mostrar la historia incompleta
+        System.out.println("Historia incompleta");
+        D.d(3,h.imprimir_historia(historia_incompleta));
+        
+        //Rellenar la historia incompleta con la teoría
+        float[][] prediccion = h.rellenar_historia(historia_incompleta, teoria);
+        
+        //Mostrar la predicción
+        System.out.println("Predicción");
+        D.d(3,h.imprimir_historia(prediccion));
+        
+        //Convertir la predicción a números
+        for(int i=0; i<prediccion.length; i++){
+            System.out.print(Numeros.vectorAbinario(prediccion[i]));
+            System.out.print(" ");
+        }
     }
 }

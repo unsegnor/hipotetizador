@@ -7,6 +7,7 @@ package hipotetizador;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 
 /**
  *
@@ -216,6 +217,63 @@ public class GrupoElementos {
                 Bi++;
             }
         }
+        return respuesta;
+    }
+    /**
+     * Inddica si este grupo contradice al otro
+     * @param nuevo
+     * @return 
+     */
+    boolean contradice(GrupoElementos otro) {
+        return se_contradicen(this,otro);
+    }
+    
+    /**
+     * Indica si dos grupos de elementos se contradicen
+     * @param a
+     * @param b
+     * @return 
+     */
+    boolean se_contradicen(GrupoElementos a, GrupoElementos b){
+        //De entrada no podemos demostrar que se contradigan
+        boolean respuesta = false;
+        
+        //Para comprobar si se contradicen iremos anotando lo que dicen en un hashMap
+        //HashMap<Integer, Boolean> diccionario = new HashMap<>(); 
+        
+        //Anotamos los elementos del primero
+        //...
+        
+        //Podríamos juntarlos en un grupo, ordenarlos y buscar entre los adyacentes comparamos el ID
+        //TODO peligro, dependemos de que no varíe la forma de calcular el ID..bueno utilizaremos num()
+        
+        //Juntamos todos los elementos en un array
+        ArrayList<Elemento> todos = new ArrayList<>(a.getElementos());
+        todos.addAll(b.getElementos());
+        
+        //Ordenamos el array según el ID
+        ComparaElementosPorID comparador_de_elementos_por_ID = new ComparaElementosPorID();
+        Collections.sort(todos, comparador_de_elementos_por_ID);
+        
+        //Vamos recorriéndolo y si hay dos elementos que sólo se diferencien en una unidad es que se contradicen
+        //ya que la última cifra del ID sólo puede ser 1 o 0 en función de si es verdadero o falso
+        //si tenemos el 300 y el 301 querrá decir que la entrada 3 subíndice 0 tiene el valor 0 y 1 a la vez -> contradicción
+        for(int i=0; i<todos.size()-1 && !respuesta; i++){
+            Elemento uno = todos.get(i);
+            Elemento dos = todos.get(+1);
+            
+            int ID1 = uno.getID();
+            int ID2 = dos.getID();
+            
+            int diferencia = Math.abs(ID2-ID1);
+            
+            //Si la dierencia es 1 entonces se contradicen
+            if(diferencia == 1){
+                respuesta = true;
+            }
+        }
+        
+        
         return respuesta;
     }
 }

@@ -150,7 +150,7 @@ public class Regla {
             //Calcular la cantidad de información que nos da
             //usamos la confianza como la probabilidad de que se de la regla
             //La confianza multiplicada por el logaritmo en base 2 de la confianza
-            this.setCantidad_de_informacion(ci((float)this.getConfianza()));
+            this.setCantidad_de_informacion(1-entropia((float)this.getConfianza()));
 
             //TODO Calculamos las demás estadísticas interesantes...
 
@@ -160,7 +160,7 @@ public class Regla {
         }
     }
 
-    public static float ci(float p) {
+    public static float entropia(float p) {
         float respuesta = 0;
         if(p<1 && p>0) {
             respuesta = -p * (float) log2(p) - (1 - p) * (float) log2(1 - p);

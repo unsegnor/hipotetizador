@@ -18,6 +18,8 @@ public class Teoria {
     private ArrayList<Regla> certezas;
     private ArrayList<Regla> hipotesis;
     private ArrayList<Regla> sin_ruido;
+    private ArrayList<Contradiccion> contradicciones;
+    
     
     //Tamaño máximo de ventana utilizado
     private int maxTventana;
@@ -37,6 +39,7 @@ public class Teoria {
         certezas = new ArrayList<>();
         hipotesis = new ArrayList<>();
         sin_ruido = new ArrayList<>();
+        contradicciones = new ArrayList<>();
     }
 
     /**
@@ -118,6 +121,20 @@ public class Teoria {
         }
         
         return sb.toString();
+    }
+
+    /**
+     * @return the contradicciones
+     */
+    public ArrayList<Contradiccion> getContradicciones() {
+        return contradicciones;
+    }
+
+    /**
+     * @param contradicciones the contradicciones to set
+     */
+    public void setContradicciones(ArrayList<Contradiccion> contradicciones) {
+        this.contradicciones = contradicciones;
     }
     
 }

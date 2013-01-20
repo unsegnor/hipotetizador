@@ -18,7 +18,7 @@ import java.util.Comparator;
  */
 class ComparaGruposOrdenandoElementos implements Comparator<GrupoElementos> {
 
-    ComparaElementosPorID comp = new ComparaElementosPorID();
+    ComparaElementosPorHashCode comp = new ComparaElementosPorHashCode();
     
     
     

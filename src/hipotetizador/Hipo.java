@@ -1598,4 +1598,101 @@ public class Hipo {
         }
         return r;
     }
+
+    ArrayList<Contradiccion> buscar_contradicciones(Teoria teoria) {
+        //Una contradicción es un caso en el que dos reglas comparten el antecedente y tienen consecuentes contradictorios
+        //normalmente la suma de sus confianzas estará cerca de 1
+        //dos consecuentes son contradictorios si la unión contiene una contradicción
+        ArrayList<Contradiccion> respuesta = new ArrayList<>();
+
+        //Recorremos las hipótesis que es donde puede haber contradicciones
+        ArrayList<Regla> hipotesis = teoria.getHipotesis();
+        //Primero ordenamos las hipótesis por antecedente para hacer grupos con el mismo antecedente
+        Collections.sort(hipotesis, new ComparaReglasPorAntecedente());
+
+        //Vamos recorriendo la lista y haciendo grupos
+
+        ComparaGruposOrdenandoElementos compG = new ComparaGruposOrdenandoElementos();
+
+        //Guardamos la regla actual
+        Regla r_nueva = null;
+        GrupoElementos nuevo = null; //Nuevo es el antecedente que comparte todo el grupo
+        float confianza_sumada = 0;
+        int iguales = 0;
+
+        ArrayList<Regla> grupo = new ArrayList<>();
+
+        D.d("Reglas ordenadas por antecedente y consecuente");
+        for (Regla r : hipotesis) {
+            D.d(r.toString());
+            //Extraemos el grupo de elementos del antecedente
+            GrupoElementos e = r.getAntecedente();
+            if (nuevo == null) {//Soy el primero, me asigno el turno
+                nuevo = e;
+                r_nueva = r;
+                iguales = 0;
+                confianza_sumada = (float) r.getConfianza();
+            } else {
+                GrupoElementos ge = r.getConsecuente();
+                GrupoElementos gn = r_nueva.getConsecuente();
+                //Si soy igual que el nuevo y si mi consecuente es del mismo tamaño que el del modelo 
+                //TODO no estoy seguro de que se esté haciendo bien, voy a ver cómo de productivas son las contradicciones pequeñas
+                //TODO Cambiar: De momento sólo nos fijaremos en las contradicciones con reglas con consecuente de tamaños iguales
+                if (compG.compare(e, nuevo) == 0
+                        && gn.getElementos().size() == ge.getElementos().size() //Alterar estas dos líneas 1 * para añadir las contradicciones de componentes grandes agrupadas por tamaños
+                        && r.getCantidad_de_informacion() == r_nueva.getCantidad_de_informacion()
+                        ) {
+
+                    //Si mi consecuente contradice el del nuevo entonces me sumo al grupo
+                    if (r.getConsecuente().contradice(r_nueva.getConsecuente())
+                            //&& gn.getElementos().size() == ge.getElementos().size() //Alterar estas dos líneas 2 * . comentar las dos para mezclarlas todas
+                            ) {
+                        grupo.add(r);
+                        iguales++;
+                        confianza_sumada += r.getConfianza();
+                    }
+
+                } else {
+                    //Si soy diferente del nuevo es que se han terminado sus iguales y comienzan los míos
+                    if (iguales > 0) {
+                        grupo.add(r_nueva);
+                        //Creamos la contradicción y la añadimos a la lista
+                        Contradiccion c = new Contradiccion();
+                        c.setReglas(grupo);
+                        c.setTotal_confianza(confianza_sumada);
+                        c.setAntecedente(nuevo);
+                        respuesta.add(c);
+                    } //Lo apunto si había más de uno
+                    nuevo = e; //Me asigno el turno
+                    r_nueva = r;
+                    iguales = 0; //Reinicio el contador de iguales
+                    grupo = new ArrayList<>();
+                    confianza_sumada = (float) r.getConfianza();
+                }
+            }
+        }
+
+        //Si había iguales en el último caso añadimos también el último
+        if (iguales > 0) {
+            grupo.add(r_nueva);
+            //Creamos la contradicción y la añadimos a la lista
+            Contradiccion c = new Contradiccion();
+            c.setReglas(grupo);
+            c.setTotal_confianza(confianza_sumada);
+            c.setAntecedente(nuevo);
+            respuesta.add(c);
+        }
+
+        return respuesta;
+    }
+
+    /**
+     * Reducimos la teoría eliminando todas aquellas hipótesis que comparten antecedente con una certeza pues ya no son hipótesis.
+     * No basta con que compartan el antecedente??
+     * @param teoria
+     * @return 
+     */
+    Teoria reducir_teoria(Teoria teoria) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
 }
