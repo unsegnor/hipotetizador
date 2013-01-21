@@ -343,7 +343,7 @@ public class Hipo {
         //Comaparador de regla por bondad
         ComparaReglasBondad comp = new ComparaReglasBondad();
 
-        float umbral_ruido = 0.4f;
+        float umbral_ruido = 0.1f;
 
         //Obtener la historia
 
@@ -388,23 +388,29 @@ public class Hipo {
             }
         }
 
-        //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
-        ArrayList<Regla> casos_ambiguos = extraer_casos_ambiguos(sin_ruido);
-
-        //Ordenamos los casos ambiguos por bondad
-        Collections.sort(casos_ambiguos, comp);
-
-        //Imprimimos los casos ambiguos
-        D.d(1, "Casos ambiguos");
-        D.d(1, td.imprime_reglas(casos_ambiguos));
-
-
         Teoria teoria = new Teoria();
         teoria.setCertezas(certezas);
         teoria.setHipotesis(hipotesis);
         teoria.setSin_ruido(sin_ruido);
         teoria.setMaxTventana(tventana_interno);
         teoria.setMaxNentradas(nentradas);
+
+        //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
+        ArrayList<Contradiccion> contradicciones = buscar_contradicciones(teoria);
+
+        //Ordenamos los casos ambiguos por bondad
+        Collections.sort(contradicciones, new ComparaContradiccionesPorUtilidad());
+
+        //Imprimimos los casos ambiguos
+        //D.d(1, "Casos ambiguos");
+        //D.d(1, td.imprime_reglas(contradicciones));
+        //Imprimimos las contradicciones
+        D.d("Contradicciones");
+        for (Contradiccion c : contradicciones) {
+            D.d(3, c.toString());
+        }
+
+
 
         //Evaluar teoría
         EvaluacionTeoria eval = evaluar_teoria(teoria, la_historia);
@@ -444,10 +450,19 @@ public class Hipo {
 
             boolean[][] nueva_historia = la_historia;
 
-            if (casos_ambiguos.size() >= n) {
-                ArrayList<Regla> mejores_casos_ambiguos = new ArrayList<>(casos_ambiguos.subList(0, n));
+            if (contradicciones.size() >= n) {
 
-                nueva_historia = extender_historia(la_historia, mejores_casos_ambiguos, tventana_interno);
+                ArrayList<Contradiccion> mejores_contradicciones = new ArrayList<>(contradicciones.subList(0, n));
+
+                //Extraemos la primera regla de la primera contradicción
+                Regla r = mejores_contradicciones.get(0).getReglas().get(0);
+
+                //La montamos en un array para no tener que cambiar la función
+                ArrayList<Regla> vector_de_reglas_a_add = new ArrayList<>();
+
+                vector_de_reglas_a_add.add(r);
+
+                nueva_historia = extender_historia(la_historia, vector_de_reglas_a_add, tventana_interno);
             }
             int n_entradas = nueva_historia[0].length;
 
@@ -487,18 +502,24 @@ public class Hipo {
                 }
             }
 
-            //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
-            casos_ambiguos = extraer_casos_ambiguos(sin_ruido);
-
-            //Imprimimos los casos ambiguos
-            D.d(1, "Casos ambiguos");
-            D.d(1, td.imprime_reglas(casos_ambiguos));
-
             teoria.setCertezas(certezas);
             teoria.setHipotesis(hipotesis);
             teoria.setSin_ruido(sin_ruido);
             teoria.setMaxTventana(tventana_interno);
             teoria.setMaxNentradas(n_entradas);
+
+            //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
+            contradicciones = buscar_contradicciones(teoria);
+
+            //Imprimimos los casos ambiguos
+            //D.d(1, "Casos ambiguos");
+            //D.d(1, td.imprime_reglas(casos_ambiguos));
+
+            //Imprimimos las contradicciones
+            D.d("Contradicciones");
+            for (Contradiccion c : contradicciones) {
+                D.d(3, c.toString());
+            }
 
             //Evaluar teoría
             eval = evaluar_teoria(teoria, nueva_historia);
@@ -541,16 +562,25 @@ public class Hipo {
         //Imprimir la deducción, la seguna parte de la ventana
         D.d(2, this.imprime_array(deduccion[1]));
 
-        for (int i = 0; i < 10; i++) {
+        int nejemplos = 10;
+        float[][] prediccion = new float[nejemplos][];
+        
+        for (int i = 0; i < nejemplos; i++) {
 
             ventana[0] = deduccion[1];
             ventana[1] = entrada_incognita;
 
             deduccion = this.evaluar_probabilidad(ventana, teoria);
 
+            prediccion[i] = deduccion[1];
             D.d(2, this.imprime_array(deduccion[1]));
         }
 
+                //Convertir la predicción a números
+        for(int i=0; i<prediccion.length; i++){
+            System.out.print(Numeros.vectorAbinario(prediccion[i]));
+            System.out.print(" ");
+        }
 
         //Devolver la teoría que explica la historia
 
@@ -1640,12 +1670,10 @@ public class Hipo {
                 //TODO Cambiar: De momento sólo nos fijaremos en las contradicciones con reglas con consecuente de tamaños iguales
                 if (compG.compare(e, nuevo) == 0
                         && gn.getElementos().size() == ge.getElementos().size() //Alterar estas dos líneas 1 * para añadir las contradicciones de componentes grandes agrupadas por tamaños
-                        && r.getCantidad_de_informacion() == r_nueva.getCantidad_de_informacion()
-                        ) {
+                        && r.getCantidad_de_informacion() == r_nueva.getCantidad_de_informacion()) {
 
                     //Si mi consecuente contradice el del nuevo entonces me sumo al grupo
-                    if (r.getConsecuente().contradice(r_nueva.getConsecuente())
-                            //&& gn.getElementos().size() == ge.getElementos().size() //Alterar estas dos líneas 2 * . comentar las dos para mezclarlas todas
+                    if (r.getConsecuente().contradice(r_nueva.getConsecuente()) //&& gn.getElementos().size() == ge.getElementos().size() //Alterar estas dos líneas 2 * . comentar las dos para mezclarlas todas
                             ) {
                         grupo.add(r);
                         iguales++;
@@ -1687,12 +1715,25 @@ public class Hipo {
     }
 
     /**
-     * Reducimos la teoría eliminando todas aquellas hipótesis que comparten antecedente con una certeza pues ya no son hipótesis.
-     * No basta con que compartan el antecedente??
+     * Reducimos la teoría eliminando todas aquellas hipótesis que comparten
+     * antecedente con una certeza pues ya no son hipótesis. No basta con que
+     * compartan el antecedente??
+     *
      * @param teoria
-     * @return 
+     * @return
      */
     Teoria reducir_teoria(Teoria teoria) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    /**
+     * Mejorar la teoría quiere decir añadir estados para eliminar
+     * contradicciones de las hipótesis.
+     *
+     * @param teoria
+     * @return
+     */
+    Teoria mejorar_teoria(Teoria teoria) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 }

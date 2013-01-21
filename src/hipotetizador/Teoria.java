@@ -20,6 +20,8 @@ public class Teoria {
     private ArrayList<Regla> sin_ruido;
     private ArrayList<Contradiccion> contradicciones;
     
+    private ArrayList<Regla> estados;
+    
     
     //Tamaño máximo de ventana utilizado
     private int maxTventana;

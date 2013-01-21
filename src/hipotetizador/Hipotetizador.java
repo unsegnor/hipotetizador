@@ -31,7 +31,7 @@ public class Hipotetizador {
 
         //Activamos la depuración
         D.enabled = true;
-        D.level = 3;
+        D.level = 2;
 
 
         int entradas = 1;
@@ -52,7 +52,8 @@ public class Hipotetizador {
         //System.out.println(imprimir_resultados(resultados));
         
         //comunidad_cientifica();
-        contexto_oculto(h);
+        //contexto_oculto(h);
+        contexto_oculto_rapido(h);
 
     }
 
@@ -511,7 +512,17 @@ public class Hipotetizador {
         }
         
         //Mejorar la teoría a partir de las contradicciones encontradas
-            //Bucle
+        //Bucle
+        int veces = 10;
+        while(veces > 0){
+            
+            //Mejorar la teoría
+            //Teoria nueva = h.mejorar_teoria(teoria);
+            
+            //Evaluar la nueva teoría
+            
+            veces--;
+        }
         
         //Imprimimos la teoría
         D.d(3,"Teoría");
@@ -542,5 +553,85 @@ public class Hipotetizador {
             System.out.print(Numeros.vectorAbinario(prediccion[i]));
             System.out.print(" ");
         }
+    }
+
+    private static void contexto_oculto_rapido(Hipo h) throws IOException {
+                InputStreamReader isr = new InputStreamReader(System.in);
+        BufferedReader bf = new BufferedReader(isr);
+
+        //Obtener input en una sola línea separado por espacios
+        System.out.println("Introducir serie numérica en una sola línea separada por espacios");
+        String linea = bf.readLine();
+
+        //Separar la entrada por espacios
+        String[] s_num = linea.split(" ");
+
+        //Convertir los números en binario
+        String[] s_bin = new String[s_num.length];
+        //Almacenamos la longitud máxima
+        int maxlength = 0;
+        for (int i = 0; i < s_num.length; i++) {
+            s_bin[i] = Integer.toBinaryString(Integer.parseInt(s_num[i]));
+            maxlength = Math.max(maxlength, s_bin[i].length());
+        }
+
+        //La longitud máxima es el número de entradas
+        int nentradas = maxlength;
+        //La cantidad de números es el tamaño de la historia
+        int t_historia = s_bin.length;
+
+        //Componemos la historia
+        boolean[][] historia = new boolean[t_historia][nentradas];
+        //Para cada línea de la historia
+        for (int i = 0; i < t_historia; i++) {
+            //Leemos la cadena binaria correspondiente
+            String c_bin = s_bin[i];
+            int l = c_bin.length();
+            //Vamos rellenando la historia hasta donde lleguemos
+            for (int j = 0; j < l; j++) {
+                historia[i][j] = c_bin.charAt((l-1)-j) == '0' ? false : true;
+            }
+            //Después llenamos el resto de ceros
+            for (int j = l; j < nentradas; j++) {
+                historia[i][j] = false;
+            }
+        }
+
+        int tventana = 2;
+        float umbral_de_hipotesis = 0.1f;
+        float umbral_de_certeza = 1f;
+        float umbral_explicabilidad = 0.8f;
+        float umbral_de_ruido = 0.1f;
+        float umbral_de_soporte = 0.1f;
+        boolean generar_subreglas = false;
+
+        //Mostrar la historia
+        System.out.println("Historia");
+        D.d(3,h.imprimir_historia(historia));
+        
+        Teoria teoria = h.sinAmbiguedad(nentradas, tventana, historia, umbral_de_hipotesis, umbral_de_certeza, umbral_explicabilidad, generar_subreglas);
+        
+        int nejemplos = 2;
+        int nincompletos = 10;
+        
+        float[][] historia_incompleta = h.elaborar_historia_futura(historia, nejemplos, nincompletos);
+        
+        //Mostrar la historia incompleta
+        System.out.println("Historia incompleta");
+        D.d(3,h.imprimir_historia(historia_incompleta));
+        
+        //Rellenar la historia incompleta con la teoría
+        float[][] prediccion = h.rellenar_historia(historia_incompleta, teoria);
+        
+        //Mostrar la predicción
+        System.out.println("Predicción");
+        D.d(3,h.imprimir_historia(prediccion));
+        
+        //Convertir la predicción a números
+        for(int i=0; i<prediccion.length; i++){
+            System.out.print(Numeros.vectorAbinario(prediccion[i]));
+            System.out.print(" ");
+        }
+        
     }
 }
