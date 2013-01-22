@@ -19,7 +19,7 @@ public class ComparaContradiccionesPorUtilidad implements Comparator<Contradicci
         //Es más útil una contradicción pequeña
         //Comparamos cantidad de reglas que tiene (menor mejor)
         if(respuesta == 0){
-            respuesta = t.getReglas().size() - t1.getReglas().size();
+            respuesta = t.getReglas().size() - t1.getReglas().size(); //TODO cambiar t1 por t
         }
         //Comparamos por tamaño del antecedente (menor mejor)
         if(respuesta == 0){

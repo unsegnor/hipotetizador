@@ -281,7 +281,8 @@ public class Hipotetizador {
         D.d(3,h.imprimir_historia(historia_incompleta));
         
         //Rellenar la historia incompleta con la teoría
-        float[][] prediccion = h.rellenar_historia(historia_incompleta, teoria);
+        boolean normalizar = false;
+        float[][] prediccion = h.rellenar_historia(historia_incompleta, teoria, normalizar);
         
         //Mostrar la predicción
         System.out.println("Predicción");
@@ -542,7 +543,8 @@ public class Hipotetizador {
         D.d(3,h.imprimir_historia(historia_incompleta));
         
         //Rellenar la historia incompleta con la teoría
-        float[][] prediccion = h.rellenar_historia(historia_incompleta, teoria);
+        boolean normalizar = true;
+        float[][] prediccion = h.rellenar_historia(historia_incompleta, teoria, normalizar);
         
         //Mostrar la predicción
         System.out.println("Predicción");
@@ -556,7 +558,10 @@ public class Hipotetizador {
     }
 
     private static void contexto_oculto_rapido(Hipo h) throws IOException {
-                InputStreamReader isr = new InputStreamReader(System.in);
+        
+        D.level = 3;
+        
+        InputStreamReader isr = new InputStreamReader(System.in);
         BufferedReader bf = new BufferedReader(isr);
 
         //Obtener input en una sola línea separado por espacios
@@ -599,18 +604,18 @@ public class Hipotetizador {
 
         int tventana = 2;
         float umbral_de_hipotesis = 0.1f;
-        float umbral_de_certeza = 1f;
-        float umbral_explicabilidad = 0.8f;
+        float umbral_de_certeza = 0.9f;
+        float umbral_explicabilidad = 0.9f; //Si es 1 no admite ruido
         float umbral_de_ruido = 0.1f;
         float umbral_de_soporte = 0.1f;
-        boolean generar_subreglas = false;
+        boolean generar_subreglas = true;
 
         //Mostrar la historia
         System.out.println("Historia");
         D.d(3,h.imprimir_historia(historia));
         
         Teoria teoria = h.sinAmbiguedad(nentradas, tventana, historia, umbral_de_hipotesis, umbral_de_certeza, umbral_explicabilidad, generar_subreglas);
-        
+        /*
         int nejemplos = 2;
         int nincompletos = 10;
         
@@ -632,6 +637,7 @@ public class Hipotetizador {
             System.out.print(Numeros.vectorAbinario(prediccion[i]));
             System.out.print(" ");
         }
+        * */
         
     }
 }

@@ -189,4 +189,22 @@ public class Regla {
     public void setCantidad_de_informacion(double cantidad_de_informacion) {
         this.cantidad_de_informacion = cantidad_de_informacion;
     }
+    
+    
+    //TODO habría que comprobar que sea la misma o equivalente lógicamente
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || obj.getClass() != this.getClass()) {
+            return false;
+        }
+
+        Regla otro = (Regla) obj;
+
+        
+
+        return (this.getAntecedente().equals(otro.getAntecedente()) && this.getConsecuente().equals(otro.getConsecuente()));
+    }
 }

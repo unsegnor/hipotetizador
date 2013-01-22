@@ -67,6 +67,9 @@ public class Hipo {
     HashMap<Integer, HashSet<HashSet<Elemento>>> itemsets;
     //Almacena los k-itemsets en la posición k
 
+    public Hipo() {
+    }
+
     public Hipo(int n_entradas, int t_ventana) {
         init(n_entradas, t_ventana);
     }
@@ -348,8 +351,8 @@ public class Hipo {
         //Obtener la historia
 
         //Imprimir la historia
-        D.d(2, "Historia");
-        D.d(2, this.imprimir_historia(la_historia));
+        D.d(3, "Historia");
+        D.d(3, this.imprimir_historia(la_historia));
 
         //Hacer las cuentas primera pasada
         //TODO crear clase CUENTAS
@@ -407,7 +410,7 @@ public class Hipo {
         //Imprimimos las contradicciones
         D.d("Contradicciones");
         for (Contradiccion c : contradicciones) {
-            D.d(3, c.toString());
+            D.d(2, c.toString());
         }
 
 
@@ -420,12 +423,14 @@ public class Hipo {
         //Imprimir evaluación de la teoría
         D.d(2, "Evaluación de la teoría");
         D.d(2, eval.toString());
-        D.d(2, "Explicabilidad: " + eval.getExplicabilidad());
+        D.d(3, "Explicabilidad: " + eval.getExplicabilidad());
 
         //Dividir en dos cosas -> historia y estados_ocultos, que se juntan para evaluar
         //los estados ocultos forman parte de la Teoria
 
 
+
+        ArrayList<Regla> contradicciones_utilizadas = new ArrayList<>();
 
         //Mientras haya casos ambiguos hacer (no es mientras haya casos ambiguos sino mientras la teoría no esté completa)
         //También podemos hacerlo en función de si entendemos o no el contexto, lo que sucede, lo que no sucede no nos interesa
@@ -454,21 +459,41 @@ public class Hipo {
 
                 ArrayList<Contradiccion> mejores_contradicciones = new ArrayList<>(contradicciones.subList(0, n));
 
+
+
                 //Extraemos la primera regla de la primera contradicción
-                Regla r = mejores_contradicciones.get(0).getReglas().get(0);
+                Contradiccion c = contradicciones.get(0);
+                Regla r = c.getReglas().get(0);
+                int con = 1;
+                //Mientras la contradicción seleccionada no sea repetida
+                while (contradicciones_utilizadas.contains(r)) {
+
+                    c = contradicciones.get(con);
+                    r = c.getReglas().get(0);
+                    con++;
+                }
+
+
+                //La anotamos para no volver a repetirla
+                contradicciones_utilizadas.add(r);
+
+
 
                 //La montamos en un array para no tener que cambiar la función
                 ArrayList<Regla> vector_de_reglas_a_add = new ArrayList<>();
 
                 vector_de_reglas_a_add.add(r);
 
+                //Añadimos también la segunda regla
+                //vector_de_reglas_a_add.add(c.getReglas().get(1));
+
                 nueva_historia = extender_historia(la_historia, vector_de_reglas_a_add, tventana_interno);
             }
             int n_entradas = nueva_historia[0].length;
 
             //Imprimir la nueva historia
-            D.d(2, "Nueva historia");
-            D.d(2, this.imprimir_historia(nueva_historia));
+            D.d(3, "Nueva historia");
+            D.d(3, this.imprimir_historia(nueva_historia));
 
             //Hacer las cuentas primera pasada
             //TODO crear clase CUENTAS
@@ -518,7 +543,7 @@ public class Hipo {
             //Imprimimos las contradicciones
             D.d("Contradicciones");
             for (Contradiccion c : contradicciones) {
-                D.d(3, c.toString());
+                D.d(2, c.toString());
             }
 
             //Evaluar teoría
@@ -528,7 +553,7 @@ public class Hipo {
             //Imprimir evaluación de la teoría
             D.d(2, "Evaluación de la teoría");
             D.d(2, eval.toString());
-            D.d(2, "Explicabilidad: " + eval.getExplicabilidad());
+            D.d(3, "Explicabilidad: " + eval.getExplicabilidad());
 
             //Volver a hacer cuentas
             la_historia = nueva_historia;
@@ -560,11 +585,11 @@ public class Hipo {
         float[][] deduccion = this.evaluar_probabilidad(ventana, teoria);
 
         //Imprimir la deducción, la seguna parte de la ventana
-        D.d(2, this.imprime_array(deduccion[1]));
+        D.d(3, this.imprime_array(deduccion[1]));
 
-        int nejemplos = 10;
+        int nejemplos = 20;
         float[][] prediccion = new float[nejemplos][];
-        
+
         for (int i = 0; i < nejemplos; i++) {
 
             ventana[0] = deduccion[1];
@@ -572,13 +597,15 @@ public class Hipo {
 
             deduccion = this.evaluar_probabilidad(ventana, teoria);
 
+            deduccion = this.normalizar(deduccion);
+
             prediccion[i] = deduccion[1];
-            D.d(2, this.imprime_array(deduccion[1]));
+            D.d(3, this.imprime_array(deduccion[1]) + " " + Numeros.vectorAbinario(deduccion[1]));
         }
 
-                //Convertir la predicción a números
-        for(int i=0; i<prediccion.length; i++){
-            System.out.print(Numeros.vectorAbinario(prediccion[i]));
+        //Convertir la predicción a números, sólo la entrada original
+        for (int i = 2; i < prediccion.length; i++) {
+            System.out.print(Numeros.vectorAbinario(Arrays.copyOfRange(prediccion[i], 0, nentradas)));
             System.out.print(" ");
         }
 
@@ -1002,6 +1029,10 @@ public class Hipo {
         return respuesta;
     }
 
+    private float[][] evaluar_probabilidad(boolean[][] entradas, Teoria teoria) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
     private float[][] evaluar_probabilidad(int[][] entradas, Teoria teoria) {
         return evaluar_probabilidad(entradas, teoria);
     }
@@ -1332,6 +1363,14 @@ public class Hipo {
         return nueva_historia;
     }
 
+    private EvaluacionTeoria evaluar_teoria_con_ruido(Teoria teoria, boolean[][] la_historia) {
+        EvaluacionTeoria eval = new EvaluacionTeoria();
+        //Recorremos las certezas p
+
+
+        return eval;
+    }
+
     /**
      * Evalua una teoría.
      *
@@ -1520,7 +1559,7 @@ public class Hipo {
      * @param teoria
      * @return
      */
-    float[][] rellenar_historia(float[][] historia_incompleta, Teoria teoria) {
+    float[][] rellenar_historia(float[][] historia_incompleta, Teoria teoria, boolean normalizar) {
 
         //Tamaño de la historia incompleta
         int thistoria_incompleta = historia_incompleta.length;
@@ -1571,7 +1610,9 @@ public class Hipo {
             float[][] ventanaRellena = this.evaluar_probabilidad(ventana, teoria);
 
             //Normalizamos los valores de la ventanaRellena (para dejarlos en 0, 0.5 o 1)
-            ventanaRellena = normalizar(ventanaRellena);
+            if (normalizar) {
+                ventanaRellena = normalizar(ventanaRellena);
+            }
 
             //Añadimos el primer registro a la historia que estamos componiendo
             //ya que este registro ha sido totalmente calculado
@@ -1606,6 +1647,16 @@ public class Hipo {
             }
         }
 
+        return respuesta;
+    }
+    
+    public float[] normalizar(float[] array){
+        float[] respuesta = new float[array.length];
+        
+        for(int i=0; i<array.length; i++){
+            respuesta[i] = normalizar(array[i]);
+        }
+        
         return respuesta;
     }
 
