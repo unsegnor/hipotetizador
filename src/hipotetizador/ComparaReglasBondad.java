@@ -23,7 +23,12 @@ public class ComparaReglasBondad implements Comparator<Regla>{
         //respuesta = Double.compare(t1.getCantidad_de_informacion(), t.getCantidad_de_informacion());
         
         
-        
+        //Si empatan entonces ordenamos por tamaño de la regla
+        //Que sean reglas pequeñas
+        if(respuesta ==0){
+            respuesta = (t.getAntecedente().getElementos().size()+t.getConsecuente().getElementos().size() 
+                    - (t1.getAntecedente().getElementos().size()+t1.getConsecuente().getElementos().size()));
+        }
 
         
         
@@ -39,12 +44,7 @@ public class ComparaReglasBondad implements Comparator<Regla>{
         }
         }
         
-        //Si empatan entonces ordenamos por tamaño de la regla
-        //Que sean reglas pequeñas
-        if(respuesta ==0){
-            respuesta = (t.getAntecedente().getElementos().size()+t.getConsecuente().getElementos().size() 
-                    - (t1.getAntecedente().getElementos().size()+t1.getConsecuente().getElementos().size()));
-        }
+
         
         return respuesta;
     }

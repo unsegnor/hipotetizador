@@ -7,14 +7,14 @@ package hipotetizador;
 import java.util.Comparator;
 
 /**
- *
+ * Los ordena en función del hashcode
  * @author Victor
  */
-public class ComparaElementosPorID implements Comparator<Elemento> {
+class ComparaElementosPorHashCode implements Comparator<Elemento> {
 
     @Override
     public int compare(Elemento t, Elemento t1) {
-        return t.getID() - t1.getID();
+        return t.hashCode() - t1.hashCode();
     }
     
 }
