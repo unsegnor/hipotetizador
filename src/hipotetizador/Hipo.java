@@ -49,12 +49,12 @@ import java.util.Set;
  */
 public class Hipo {
 
-    int tventana = 2;
-    int thistoria = 12;//Integer.MAX_VALUE-1;
+    int tventana_interno = 2;
+    int thistoria_interna = 12;//Integer.MAX_VALUE-1;
     //Memoria a corto plazo
     boolean[][] ventana;
     //Memoria a medio plazo
-    boolean[][] historia;
+    boolean[][] historia_interna;
     //Memoria a largo plazo
     ArrayList<Regla> reglas_aprendidas;
     int ph = 0; //Apunta a la primera posición libre del vector de historia
@@ -63,35 +63,38 @@ public class Hipo {
     //La segunda dimensión es el subíndice de la entrada
     //El par valor contiene en el primero la cantidad de veces que aparece con valor verdadero (1)
     //en el segundo la cantidad de veces que ha aparecido esa entrada con ese subíndice
-    int nentradas;
+    int nentradas_interno;
     HashMap<Integer, HashSet<HashSet<Elemento>>> itemsets;
     //Almacena los k-itemsets en la posición k
+
+    public Hipo() {
+    }
 
     public Hipo(int n_entradas, int t_ventana) {
         init(n_entradas, t_ventana);
     }
 
     private void init(int n_entradas, int t_ventana) {
-        tventana = t_ventana;
-        nentradas = n_entradas;
+        tventana_interno = t_ventana;
+        nentradas_interno = n_entradas;
 
-        cuentas = new Par[nentradas][tventana];
+        cuentas = new Par[nentradas_interno][tventana_interno];
         //Inicializar cuentas
-        for (int i = 0; i < nentradas; i++) {
+        for (int i = 0; i < nentradas_interno; i++) {
 
-            for (int j = 0; j < tventana; j++) {
+            for (int j = 0; j < tventana_interno; j++) {
                 cuentas[i][j] = new Par<Long, Long>(0l, 0l);
 
             }
 
         }
-        ventana = new boolean[nentradas][tventana];
-        historia = new boolean[thistoria][nentradas];
+        ventana = new boolean[nentradas_interno][tventana_interno];
+        historia_interna = new boolean[thistoria_interna][nentradas_interno];
     }
 
     public void muestrear(boolean[] muestra) {
         //Añadimos la muestra a la historia
-        historia[ph] = muestra;
+        historia_interna[ph] = muestra;
 
         //Contamos los unos (trues) que lleguen en cada posición
         anotar(ph, muestra);
@@ -106,7 +109,7 @@ public class Hipo {
         ph++;
 
         //Si la historia está llena procedemos a ejecutar el algoritmo
-        if (ph >= thistoria) {
+        if (ph >= thistoria_interna) {
             //Reinicializamos ph
             ph = 0;
 
@@ -176,9 +179,9 @@ public class Hipo {
     private void anotar(int i, boolean[] muestra) {
 
         //Indice en el que escribir
-        for (int j = 0; j < nentradas; j++) {
+        for (int j = 0; j < nentradas_interno; j++) {
 
-            for (int k = 0; k < tventana; k++) {
+            for (int k = 0; k < tventana_interno; k++) {
 
                 //Si la entrada es mayor o igual que el registro entonces podemos tenerlo en cuenta 
                 if (k <= i) {
@@ -335,22 +338,21 @@ public class Hipo {
      * @param umbral_de_hipotesis
      * @param umbral_de_certeza
      */
-    
     //TODO implementar algoritmo greedy para seleccionar los bits que nos inventaremos
     //TODO ir probando con los diferentes casos y ver el aumento de explicabilidad que conseguimos
     //guardar en una tabla las características de la regla y el aumento de explicabilidad conseguido a ver si vemos la regla
-    public Teoria sinAmbiguedad(int nentradas, int long_ventana, boolean[][] la_historia, double umbral_de_hipotesis, double umbral_de_certeza, float umbral_explicabilidad) {
+    public Teoria sinAmbiguedad(int nentradas, int long_ventana, boolean[][] la_historia, double umbral_de_hipotesis, double umbral_de_certeza, float umbral_explicabilidad, boolean generar_subreglas) {
 
         //Comaparador de regla por bondad
         ComparaReglasBondad comp = new ComparaReglasBondad();
 
-        float umbral_ruido = 0.4f;
+        float umbral_ruido = 0.1f;
 
         //Obtener la historia
 
         //Imprimir la historia
-        D.d(2, "Historia");
-        D.d(2, this.imprimir_historia(la_historia));
+        D.d(3, "Historia");
+        D.d(3, this.imprimir_historia(la_historia));
 
         //Hacer las cuentas primera pasada
         //TODO crear clase CUENTAS
@@ -369,7 +371,7 @@ public class Hipo {
         TDFPG td = new TDFPG();
 
         //Ejecutar TDFPG y obtener las reglas
-        ArrayList<Regla> todas_las_reglas = td.extraer_reglas(tabla, la_historia, long_ventana);
+        ArrayList<Regla> todas_las_reglas = td.extraer_reglas(tabla, la_historia, long_ventana, generar_subreglas);
 
         //Clasificar las reglas en certezas e hipótesis
         ArrayList<Regla> certezas = new ArrayList<>();
@@ -389,19 +391,29 @@ public class Hipo {
             }
         }
 
-        //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
-        ArrayList<Regla> casos_ambiguos = extraer_casos_ambiguos(sin_ruido);
-
-        //Ordenamos los casos ambiguos por bondad
-        Collections.sort(casos_ambiguos, comp);
-
-        //Imprimimos los casos ambiguos
-        D.d(1, "Casos ambiguos");
-        D.d(1, td.imprime_reglas(casos_ambiguos));
-
-
         Teoria teoria = new Teoria();
         teoria.setCertezas(certezas);
+        teoria.setHipotesis(hipotesis);
+        teoria.setSin_ruido(sin_ruido);
+        teoria.setMaxTventana(tventana_interno);
+        teoria.setMaxNentradas(nentradas);
+
+        //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
+        ArrayList<Contradiccion> contradicciones = buscar_contradicciones(teoria);
+
+        //Ordenamos los casos ambiguos por bondad
+        Collections.sort(contradicciones, new ComparaContradiccionesPorUtilidad());
+
+        //Imprimimos los casos ambiguos
+        //D.d(1, "Casos ambiguos");
+        //D.d(1, td.imprime_reglas(contradicciones));
+        //Imprimimos las contradicciones
+        D.d("Contradicciones");
+        for (Contradiccion c : contradicciones) {
+            D.d(2, c.toString());
+        }
+
+
 
         //Evaluar teoría
         EvaluacionTeoria eval = evaluar_teoria(teoria, la_historia);
@@ -411,12 +423,14 @@ public class Hipo {
         //Imprimir evaluación de la teoría
         D.d(2, "Evaluación de la teoría");
         D.d(2, eval.toString());
-        D.d(2, "Explicabilidad: " + eval.getExplicabilidad());
+        D.d(3, "Explicabilidad: " + eval.getExplicabilidad());
 
         //Dividir en dos cosas -> historia y estados_ocultos, que se juntan para evaluar
         //los estados ocultos forman parte de la Teoria
 
 
+
+        ArrayList<Regla> contradicciones_utilizadas = new ArrayList<>();
 
         //Mientras haya casos ambiguos hacer (no es mientras haya casos ambiguos sino mientras la teoría no esté completa)
         //También podemos hacerlo en función de si entendemos o no el contexto, lo que sucede, lo que no sucede no nos interesa
@@ -436,16 +450,50 @@ public class Hipo {
             //Rellenar los valores de los casos ambiguos en función de si se cumple o no lo que dice el caso
 
             //Escogemos los n casos ambiguos mejor valorados
+
             int n = 1;
-            ArrayList<Regla> mejores_casos_ambiguos = new ArrayList<>(casos_ambiguos.subList(0, n));
 
-            boolean[][] nueva_historia = extender_historia(la_historia, mejores_casos_ambiguos, tventana);
+            boolean[][] nueva_historia = la_historia;
 
+            if (contradicciones.size() >= n) {
+
+                ArrayList<Contradiccion> mejores_contradicciones = new ArrayList<>(contradicciones.subList(0, n));
+
+
+
+                //Extraemos la primera regla de la primera contradicción
+                Contradiccion c = contradicciones.get(0);
+                Regla r = c.getReglas().get(0);
+                int con = 1;
+                //Mientras la contradicción seleccionada no sea repetida
+                while (contradicciones_utilizadas.contains(r)) {
+
+                    c = contradicciones.get(con);
+                    r = c.getReglas().get(0);
+                    con++;
+                }
+
+
+                //La anotamos para no volver a repetirla
+                contradicciones_utilizadas.add(r);
+
+
+
+                //La montamos en un array para no tener que cambiar la función
+                ArrayList<Regla> vector_de_reglas_a_add = new ArrayList<>();
+
+                vector_de_reglas_a_add.add(r);
+
+                //Añadimos también la segunda regla
+                //vector_de_reglas_a_add.add(c.getReglas().get(1));
+
+                nueva_historia = extender_historia(la_historia, vector_de_reglas_a_add, tventana_interno);
+            }
             int n_entradas = nueva_historia[0].length;
 
             //Imprimir la nueva historia
-            D.d(2, "Nueva historia");
-            D.d(2, this.imprimir_historia(nueva_historia));
+            D.d(3, "Nueva historia");
+            D.d(3, this.imprimir_historia(nueva_historia));
 
             //Hacer las cuentas primera pasada
             //TODO crear clase CUENTAS
@@ -461,7 +509,7 @@ public class Hipo {
             tabla = this.elaborar_tabla(primerScan, 0, seleccion_de_entradas, long_ventana);
 
             //Ejecutar TDFPG y obtener las reglas
-            todas_las_reglas = td.extraer_reglas(tabla, nueva_historia, long_ventana);
+            todas_las_reglas = td.extraer_reglas(tabla, nueva_historia, long_ventana, generar_subreglas);
 
             //Clasificar las reglas en certezas e hipótesis
             certezas.clear();
@@ -479,14 +527,24 @@ public class Hipo {
                 }
             }
 
+            teoria.setCertezas(certezas);
+            teoria.setHipotesis(hipotesis);
+            teoria.setSin_ruido(sin_ruido);
+            teoria.setMaxTventana(tventana_interno);
+            teoria.setMaxNentradas(n_entradas);
+
             //Detectar y almacenar casos ambiguos (las hipótesis) que comparten antecedente y cuya confianza suma 1
-            casos_ambiguos = extraer_casos_ambiguos(sin_ruido);
+            contradicciones = buscar_contradicciones(teoria);
 
             //Imprimimos los casos ambiguos
-            D.d(1, "Casos ambiguos");
-            D.d(1, td.imprime_reglas(casos_ambiguos));
+            //D.d(1, "Casos ambiguos");
+            //D.d(1, td.imprime_reglas(casos_ambiguos));
 
-            teoria.setCertezas(certezas);
+            //Imprimimos las contradicciones
+            D.d("Contradicciones");
+            for (Contradiccion c : contradicciones) {
+                D.d(2, c.toString());
+            }
 
             //Evaluar teoría
             eval = evaluar_teoria(teoria, nueva_historia);
@@ -495,7 +553,7 @@ public class Hipo {
             //Imprimir evaluación de la teoría
             D.d(2, "Evaluación de la teoría");
             D.d(2, eval.toString());
-            D.d(2, "Explicabilidad: " + eval.getExplicabilidad());
+            D.d(3, "Explicabilidad: " + eval.getExplicabilidad());
 
             //Volver a hacer cuentas
             la_historia = nueva_historia;
@@ -503,16 +561,91 @@ public class Hipo {
 
         //Aquí tenemos una teoría que puede explicar
         //Calculamos los siguientes valores
-        int[] siguiente = this.evaluar(la_historia[la_historia.length - 1], teoria.getCertezas());
-        D.d(2, this.imprime_array(siguiente));
-        for (int i = 0; i < 10; i++) {
-            siguiente = this.evaluar(siguiente, teoria.getCertezas());
-            D.d(2, this.imprime_array(siguiente));
+
+        /*
+         int[] siguiente = this.evaluar(la_historia[la_historia.length - 1], teoria.getCertezas());
+         D.d(2, this.imprime_array(siguiente));
+         for (int i = 0; i < 10; i++) {
+         siguiente = this.evaluar(siguiente, teoria.getCertezas());
+         D.d(2, this.imprime_array(siguiente));
+         }
+         * */
+
+        //Obtenemos la última entrada
+        float[] ultima_entrada = boolean2float(la_historia[la_historia.length - 1]);
+
+        float[] entrada_incognita = entrada_incognita(ultima_entrada.length);
+
+        //Componemos la ventana
+        float[][] ventana = new float[2][];
+        ventana[0] = ultima_entrada;
+        ventana[1] = entrada_incognita;
+
+
+        float[][] deduccion = this.evaluar_probabilidad(ventana, teoria);
+
+        //Imprimir la deducción, la seguna parte de la ventana
+        D.d(3, this.imprime_array(deduccion[1]));
+
+        int nejemplos = 20;
+        float[][] prediccion = new float[nejemplos][];
+
+        for (int i = 0; i < nejemplos; i++) {
+
+            ventana[0] = deduccion[1];
+            ventana[1] = entrada_incognita;
+
+            deduccion = this.evaluar_probabilidad(ventana, teoria);
+
+            deduccion = this.normalizar(deduccion);
+
+            prediccion[i] = deduccion[1];
+            D.d(3, this.imprime_array(deduccion[1]) + " " + Numeros.vectorAbinario(deduccion[1]));
+        }
+
+        //Convertir la predicción a números, sólo la entrada original
+        for (int i = 2; i < prediccion.length; i++) {
+            System.out.print(Numeros.vectorAbinario(Arrays.copyOfRange(prediccion[i], 0, nentradas)));
+            System.out.print(" ");
         }
 
         //Devolver la teoría que explica la historia
 
         return teoria;
+    }
+
+    private String imprime_array(float[] array) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < array.length; i++) {
+            sb.append(array[i]).append(" ");
+        }
+
+
+        return sb.toString();
+    }
+
+    private float[][] boolean2float(boolean[][] matriz) {
+        float[][] respuesta = new float[matriz.length][];
+        for (int i = 0; i < matriz.length; i++) {
+            respuesta[i] = new float[matriz[i].length];
+            for (int j = 0; j < matriz[i].length; j++) {
+                //Convertir boolean a float
+                respuesta[i][j] = matriz[i][j] ? 1f : 0f;
+            }
+        }
+        return respuesta;
+    }
+
+    private float[] boolean2float(boolean[] v) {
+        float[] respuesta = new float[v.length];
+
+        for (int i = 0; i < v.length; i++) {
+            respuesta[i] = v[i] ? 1f : 0f;
+        }
+
+
+        return respuesta;
     }
 
     //Con cada historia buscamos nuevas hipótesis y desmentimos o confirmamos las que ya teníamos.
@@ -525,11 +658,11 @@ public class Hipo {
      * @param umbral
      * @param umbral_de_certeza
      */
-    private void TopDown(float umbral, double umbral_de_certeza, double umbral_de_hipotesis) {
+    private void TopDown(float umbral, double umbral_de_certeza, double umbral_de_hipotesis, boolean generar_subreglas) {
 
 
         //Determinar las entradas y la longitud de la ventana
-        boolean[] entradas = new boolean[nentradas];
+        boolean[] entradas = new boolean[nentradas_interno];
 
         Arrays.fill(entradas, true);
 
@@ -544,7 +677,7 @@ public class Hipo {
 
         //Ejecutar TopDown con la lista
         TDFPG td = new TDFPG();
-        ArrayList<Regla> reglas = td.extraer_reglas(tabla, historia, tventana);
+        ArrayList<Regla> reglas = td.extraer_reglas(tabla, historia_interna, tventana_interno, generar_subreglas);
         ArrayList<Regla> certezas = new ArrayList<>();
         ArrayList<Regla> hipotesis = new ArrayList<>();
 
@@ -568,23 +701,23 @@ public class Hipo {
         Collections.sort(hipotesis, new ComparadorDeReglas());
 
         //Determinar entradas que se ven afectadas por las hipótesis
-        boolean[] entradas_afectadas = calcular_entradas_afectadas(hipotesis, nentradas, true, true);
+        boolean[] entradas_afectadas = calcular_entradas_afectadas(hipotesis, nentradas_interno, true, true);
 
 
 
         //Imprimimos las reglas filtradas y ordenadas por impacto
         D.d("Certezas");
-        D.d(imprime_reglas_bonitas(certezas, this.nentradas, this.tventana));
+        D.d(imprime_reglas_bonitas(certezas, this.nentradas_interno, this.tventana_interno));
 
         //Imprimimos las reglas filtradas y ordenadas por impacto
         D.d("Hipotesis");
-        D.d(imprime_reglas_bonitas(hipotesis, this.nentradas, this.tventana));
+        D.d(imprime_reglas_bonitas(hipotesis, this.nentradas_interno, this.tventana_interno));
 
 
         //Determinar entradas que sabemos explicar (en realidad es para las que tenemos reglas que las implican
         //no tiene porqué existir una regla para cada posible caso)
         //TODO Comprobar que tenemos reglas que expliquen el 1 y el 0
-        boolean[] entradas_explicables = calcular_entradas_afectadas(certezas, nentradas, false, true);
+        boolean[] entradas_explicables = calcular_entradas_afectadas(certezas, nentradas_interno, false, true);
 
         D.d("Entradas explicables");
         D.d(imprime_array(entradas_explicables));
@@ -593,7 +726,7 @@ public class Hipo {
         //Para esto no deben existir conflictos entre reglas (habrá que comprobarlo antes)
 
         //Deducir la siguiente línea
-        int[] siguiente = evaluar(historia[historia.length - 1], certezas);
+        int[] siguiente = evaluar(historia_interna[historia_interna.length - 1], certezas);
 
         D.d("Siguiente valor:");
         D.d(imprime_array(siguiente));
@@ -676,7 +809,7 @@ public class Hipo {
 
         //Imprimir la historia.
         D.d("Historia hasta el momento-----------------------------");
-        D.d(imprimir_historia(historia));
+        D.d(imprimir_historia(historia_interna));
 
         //Imprimir cuentas
         D.d("Cuentas........................................");
@@ -702,7 +835,7 @@ public class Hipo {
         return sb.toString();
     }
 
-    private String imprimir_historia(boolean[][] la_historia) {
+    public String imprimir_historia(boolean[][] la_historia) {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < la_historia.length; i++) {
@@ -896,18 +1029,34 @@ public class Hipo {
         return respuesta;
     }
 
-    /**
-     * Devolver la forma más sencilla de explicar lo sucedido
-     *
-     * @param b
-     * @param reglas
-     * @return
-     */
-    private int[] evaluar_sencilla(int[] b, ArrayList<Regla> reglas) {
-        int[] contadores = new int[b.length];
-        int[] resultado = new int[b.length];
+    private float[][] evaluar_probabilidad(boolean[][] entradas, Teoria teoria) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
 
-        int[] respuesta = new int[b.length];
+    private float[][] evaluar_probabilidad(int[][] entradas, Teoria teoria) {
+        return evaluar_probabilidad(entradas, teoria);
+    }
+
+    //Rellena las entradas que faltan según las reglas
+    private float[][] evaluar_probabilidad(float[][] entradas, Teoria teoria) {
+        //No miramos sólo las certezas sino todo lo que no es ruido, vamos a calcular lo más probable
+        //la explicación más probable y sencilla
+        ArrayList<Regla> reglas = teoria.getSin_ruido();
+
+        int nentradas = teoria.getMaxNentradas();
+        int tventana = teoria.getMaxTventana();
+
+        int[] contadores = new int[entradas.length];
+        int[] resultado = new int[entradas.length];
+        float[][] respuesta = new float[tventana][nentradas];
+
+        //Copiamos lo que trae la entrada
+        for (int i = 0; i < entradas.length; i++) {
+            System.arraycopy(entradas[i], 0, respuesta[i], 0, nentradas);
+        }
+
+
+        float[][] probabilidades = new float[tventana][nentradas];
         //Recorrer las reglas a ver cuál se dispara, ordenarlas por confianza y después por impacto y después por longitud
 
         ArrayList<Regla> aux = new ArrayList<>(reglas);
@@ -916,8 +1065,165 @@ public class Hipo {
 
         Collections.sort(aux, comp);
 
-        //Para cada elemento de la respuesta buscamos una regla que lo contenga en el consecuente
-        
+        //Recorremos todas las reglas y las que se disparen sólo modifican la respuesta si no lo había hecho ya otra con menor probabilidad
+        for (Regla r : aux) {
+            //Saber si dispara
+            boolean dispara = true;
+            boolean alguno = false;
+
+            //Probabilidad con la que se dispara
+            float probabilidad_disparo = 1;
+
+            //Dispara cuando todas las entradas coinciden con su antecedente
+            ArrayList<Elemento> antecedente = r.getAntecedente().getElementos();
+            for (Elemento e : antecedente) {
+                float valorEntrada = entradas[e.getSubindice()][e.getEntrada()];
+                //El 0.5 coincide con todas
+                if ((valorEntrada > 0.5 && !e.isVerdadero())
+                        || valorEntrada < 0.5 && e.isVerdadero()) {
+                    //No se dispara, no coinciden
+                    dispara = false;
+                } else if ((valorEntrada >= 0.5 && e.isVerdadero())
+                        || valorEntrada <= 0.5 && !e.isVerdadero()) {
+                    //Sí coincide, alguno coincide
+                    alguno = true;
+
+                    //Si coincide multiplicamos la probabilidad de que el valor sea correcto
+                    //Si es cero entonces multiplicamos por la probabilidad inversa (1-p)
+                    if (e.isVerdadero()) {
+                        probabilidad_disparo *= valorEntrada;
+                    } else {
+                        probabilidad_disparo *= (1 - valorEntrada);
+                    }
+                }
+            }
+
+            //Si algun antecedente coincide y ninguno contradice las entradas entonces dispara
+            dispara = dispara && alguno;
+
+            //Si dispara modificamos la respuesta en función del consecuente
+            if (dispara) {
+                //Obtenemos el consecuente
+                ArrayList<Elemento> consecuente = r.getConsecuente().getElementos();
+                for (Elemento e : consecuente) {
+                    //El elemento que indica el consecuente tendrá el valor que indica el consecuente salvo que ya esté escrito por una regla anterior (y mejor en teoría)
+                    //Indicaremos el valor como la probabilidad de que sea 1 en función de la confianza de la regla
+                    //Comprobamos que nadie haya escrito ya la respuesta
+                    float valorActual = respuesta[e.getSubindice()][e.getEntrada()];
+                    if (valorActual != 1 && valorActual != 0) {
+                        int valorNuevo = e.isVerdadero() ? 1 : 0;
+                        //respuesta[e.getSubindice()][e.getEntrada()] = valorNuevo;
+                        //Si es cero la probabilidad se invierte
+                        float probabilidad = (float) r.getConfianza();
+                        //Multiplicamos la probabilidad por la probabilidad de que dispare
+                        //así penalizamos a las reglas que tienen muchos antecedentes inciertos
+                        probabilidad *= probabilidad_disparo;
+                        if (valorNuevo == 0) {
+                            probabilidad = 1 - probabilidad;
+                        }
+
+                        //Sólo la aceptamos si defiende un 0 y es menor que 0.5 o si defiende un 1 y es mayor que 0.5
+                        //ya que las reglas no son dobles implicaciones, es decir, que no se cumpla una regla
+                        //no aporta ninguna información sobre el cumplimiento o no de otras
+                        if (valorNuevo == 0 && probabilidad < 0.5
+                                || valorNuevo == 1 && probabilidad > 0.5) {
+
+                            //Si la probabilidad es mejor que la que ya había entonces se sustituye
+                            //Es mejor cuanto más alejada está de 0.5
+                            //Bondad de la Probabilida actual
+                            float BvalorActual = Math.abs(valorActual - 0.5f); //Calculamos la distancia a 0.5 para cada una
+                            float BvalorNuevo = Math.abs(probabilidad - 0.5f);
+                            if (BvalorNuevo > BvalorActual) {
+                                respuesta[e.getSubindice()][e.getEntrada()] = probabilidad; //Nos quedamos con la que está más alejada del desconocimiento, del 0.5
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+
+        return respuesta;
+    }
+
+    /**
+     * Devolver la forma más sencilla de explicar lo sucedido, rellena lo que
+     * falta
+     *
+     * @param entradas
+     * @param reglas
+     * @return
+     */
+    private int[][] evaluar_probable(int[][] entradas, Teoria teoria) {
+        //No miramos sólo las certezas sino todo lo que no es ruido, vamos a calcular lo más probable
+        //la explicación más probable y sencilla
+        ArrayList<Regla> reglas = teoria.getSin_ruido();
+
+        int nentradas = teoria.getMaxNentradas();
+        int tventana = teoria.getMaxTventana();
+
+        int[] contadores = new int[entradas.length];
+        int[] resultado = new int[entradas.length];
+        int[][] respuesta = new int[tventana][nentradas];
+
+        //Copiamos lo que trae la entrada
+        for (int i = 0; i < entradas.length; i++) {
+            System.arraycopy(entradas[i], 0, respuesta[i], 0, nentradas);
+        }
+
+
+        float[][] probabilidades = new float[tventana][nentradas];
+        //Recorrer las reglas a ver cuál se dispara, ordenarlas por confianza y después por impacto y después por longitud
+
+        ArrayList<Regla> aux = new ArrayList<>(reglas);
+
+        ComparaReglasBondad comp = new ComparaReglasBondad();
+
+        Collections.sort(aux, comp);
+
+        //Recorremos todas las reglas y las que se disparen sólo modifican la respuesta si no lo había hecho ya otra
+        for (Regla r : reglas) {
+            //Saber si dispara
+            boolean dispara = true;
+            boolean alguno = false;
+            //Dispara cuando todas las entradas coinciden con su antecedente
+            ArrayList<Elemento> antecedente = r.getAntecedente().getElementos();
+            for (Elemento e : antecedente) {
+                int valorEntrada = (int) entradas[e.getSubindice()][e.getEntrada()];
+                if ((valorEntrada == 1 && !e.isVerdadero())
+                        || valorEntrada == 0 && e.isVerdadero()) {
+                    //No se dispara, no coinciden
+                    dispara = false;
+                } else if ((valorEntrada == 1 && e.isVerdadero())
+                        || valorEntrada == 0 && !e.isVerdadero()) {
+                    //Sí coincide, alguno coincide
+                    alguno = true;
+                }
+            }
+
+            //Si algun antecedente coincide y ninguno contradice las entradas entonces dispara
+            dispara = dispara && alguno;
+
+            //Si dispara modificamos la respuesta en función del consecuente
+            if (dispara) {
+                //Obtenemos el consecuente
+                ArrayList<Elemento> consecuente = r.getConsecuente().getElementos();
+                for (Elemento e : consecuente) {
+                    //El elemento que indica el consecuente tendrá el valor que indica el consecuente salvo que ya esté escrito por una regla anterior (y mejor en teoría)
+                    //Indicaremos el valor como la probabilidad de que sea 1 en función de la confianza de la regla
+                    //Comprobamos que nadie haya escrito ya la respuesta
+                    int valorActual = respuesta[e.getSubindice()][e.getEntrada()];
+                    if (valorActual != 1 && valorActual != 0) {
+                        int valorNuevo = e.isVerdadero() ? 1 : 0;
+                        respuesta[e.getSubindice()][e.getEntrada()] = valorNuevo;
+                        //Si es cero la probabilidad se invierte
+                        float probabilidad = (float) (1 - (float) valorNuevo) - (float) r.getConfianza();
+                        probabilidades[e.getSubindice()][e.getEntrada()] = probabilidad;
+                    }
+                }
+            }
+
+        }
 
         return respuesta;
     }
@@ -927,7 +1233,7 @@ public class Hipo {
         ArrayList<Regla> respuesta = new ArrayList<>();
 
 
-        //Ordenar la lista por el antecedente
+        //Ordenar la lista por el antecedente y consecuente
         ComparaReglasPorAntecedente comp = new ComparaReglasPorAntecedente();
         Collections.sort(reglas, comp);
 
@@ -938,10 +1244,10 @@ public class Hipo {
 
         //Guardamos la regla actual
         Regla r_nueva = null;
-        GrupoElementos nuevo = null;
+        GrupoElementos nuevo = null; //Nuevo es el antecedente comparte todo el grupo
         int iguales = 0;
 
-        D.d("Reglas ordenadas por antecedente");
+        D.d("Reglas ordenadas por antecedente y consecuente");
         for (Regla r : reglas) {
             D.d(r.toString());
             //Extraemos el grupo de elementos del antecedente
@@ -951,9 +1257,14 @@ public class Hipo {
                 r_nueva = r;
                 iguales = 0;
             } else {
-                if (compG.compare(e, nuevo) == 0) {//Si soy igual que el nuevo, me sumo
+                if (compG.compare(e, nuevo) == 0) {//Si soy igual que el nuevo
+                    //Si mi consecuente no incluye el consecuente del nuevo, entonces me sumo
+                    //if(!nuevo.contenido_en(e)){
                     respuesta.add(r);
                     iguales++;
+                    //}else{ //Si el consecuente del que estamos analizando contiene al del modelo
+
+                    //}
                 } else {
                     //Si soy diferente del nuevo es que se han terminado sus iguales y comienzan los míos
                     if (iguales > 0) {
@@ -1052,6 +1363,14 @@ public class Hipo {
         return nueva_historia;
     }
 
+    private EvaluacionTeoria evaluar_teoria_con_ruido(Teoria teoria, boolean[][] la_historia) {
+        EvaluacionTeoria eval = new EvaluacionTeoria();
+        //Recorremos las certezas p
+
+
+        return eval;
+    }
+
     /**
      * Evalua una teoría.
      *
@@ -1121,5 +1440,351 @@ public class Hipo {
         r.fallos_muestras = fallos_muestras;
 
         return r;
+    }
+
+    private float[] entrada_incognita(int n) {
+        //Devuelve una entrada incognita de la longitud indicada
+        //Rellenamos un vector de floats de 0.5 que es la probabilidad que no nos dice nada
+
+        float[] respuesta = new float[n];
+
+        Arrays.fill(respuesta, 0.5f);
+
+        return respuesta;
+
+    }
+
+    public ArrayList<Regla> extraer_reglas(boolean[][] historia, int nentradas, int tventana, float umbral_soporte, boolean generar_subreglas) {
+        //Hacer las cuentas primera pasada
+        //TODO crear clase CUENTAS
+        Par<Long, Long>[][] primerScan = this.hacer_cuentas(historia, tventana);
+
+        //Seleccionar las entradas que queremos tener en cuenta
+        //TODO crear clase SELECCION_DE_ENTRADAS
+        boolean[] seleccion_de_entradas = new boolean[nentradas];
+        Arrays.fill(seleccion_de_entradas, true);
+
+        //Elaborar la tabla para el TDFPG (extensible)
+        //TODO crear clase TABLA
+        ArrayList<InfoElemento> tabla = this.elaborar_tabla(primerScan, umbral_soporte, seleccion_de_entradas, tventana);
+
+        //Crear instancia de TDFPG
+        TDFPG td = new TDFPG();
+
+        //Ejecutar TDFPG y obtener las reglas
+        ArrayList<Regla> todas_las_reglas = td.extraer_reglas(tabla, historia, tventana, generar_subreglas);
+
+        return todas_las_reglas;
+    }
+
+    public Teoria elaborar_teoria(boolean[][] historia, int nentradas, int tventana, double umbral_de_certeza, double umbral_de_hipotesis, double umbral_ruido, float umbral_soporte, boolean generar_subreglas) {
+
+        //Extraer las reglas
+        ArrayList<Regla> reglas = this.extraer_reglas(historia, nentradas, tventana, umbral_soporte, generar_subreglas);
+
+        //Construir la teoría
+        Teoria teoria = new Teoria();
+        //Filtramos las reglas por el umbral de confianza
+        for (Regla r : reglas) {
+            if (r.getConfianza() >= umbral_de_certeza) {
+                teoria.getCertezas().add(r);
+            } else if (r.getConfianza() >= umbral_de_hipotesis) {
+                teoria.getHipotesis().add(r);
+            }
+            if (r.getConfianza() >= umbral_ruido) {
+                teoria.getSin_ruido().add(r);
+            }
+        }
+
+        //Rellenamos la teoría
+        teoria.setMaxTventana(tventana);
+        teoria.setMaxNentradas(nentradas);
+
+        return teoria;
+    }
+
+    /**
+     * Predecir con la historia y la teoría un número de valores siguientes a
+     * ser posible.
+     *
+     * @param historia
+     * @param teoria
+     * @param i
+     * @return
+     */
+    float[][] predecir(boolean[][] historia, Teoria teoria, int i) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    /**
+     * Elaborar la historia futura. Una historia incompleta con tantos ejemplos
+     * de la historia original como se indiquen. La historia que se devuelve es
+     * la continuación de la que se indica. Comienza los últmos nejemplos
+     * registros y le siguen nincompletos registros inciertos.
+     *
+     * @param historia
+     * @param nejemplos
+     * @param ninciertos
+     * @return
+     */
+    float[][] elaborar_historia_futura(boolean[][] historia, int nejemplos, int ninciertos) {
+
+        //Calculamos los tamaños
+        int nentradas = historia[0].length;
+        int longitud = nejemplos + ninciertos;
+
+        //La historia total
+        float[][] respuesta = new float[longitud][];
+
+        //Rellenamos el principio con los últimos nejemplos de la historia original
+        int primerEjemplo = historia.length - nejemplos;
+        for (int i = primerEjemplo, j = 0; i < historia.length; i++, j++) {
+            respuesta[j] = boolean2float(historia[i]);
+        }
+
+        //Aquí ya tenemos los primeros ejemplos
+        //Después rellenamos el resto de la historia con incertidumbre
+        for (int i = nejemplos; i < longitud; i++) {
+            respuesta[i] = this.entrada_incognita(nentradas);
+        }
+
+        return respuesta;
+    }
+
+    /**
+     * Intentamos resolver las incógnitas de la historia que se nos pasa y
+     * devolver la historia rellena.
+     *
+     * @param historia_incompleta
+     * @param teoria
+     * @return
+     */
+    float[][] rellenar_historia(float[][] historia_incompleta, Teoria teoria, boolean normalizar) {
+
+        //Tamaño de la historia incompleta
+        int thistoria_incompleta = historia_incompleta.length;
+
+        //Tamaño de ventana de la teoría
+        int tventana = teoria.getMaxTventana();
+
+        //Tamaño de la historia que utilizaremos para rellenar la incompleta
+        int thistoria = thistoria_incompleta + (tventana - 1);
+
+        //Añadimos a la historia alguno registros al final que permitirán calcular hasta el último de la hstoria incompleta
+        float[][] historia = new float[thistoria][];
+
+        //Rellenamos la historia con la historia_incompleta
+        System.arraycopy(historia_incompleta, 0, historia, 0, thistoria_incompleta);
+
+        //Terminamos de rellenarla con incógnitas
+        for (int i = thistoria_incompleta; i < thistoria; i++) {
+            historia[i] = this.entrada_incognita(teoria.getMaxNentradas());
+        }
+
+        //El tamaño de la historia final será el de la historia incompleta menos tventana-1
+        float[][] historia_rellena = new float[thistoria_incompleta][];
+
+
+
+        //Daremos una pasada por la historia incompleta aplicando las reglas de la teoría a cada ventana
+
+        //Cargamos la primera ventana interemdia
+        int tventana_intermedia = tventana - 1;
+
+        //La ventana intermedia contiene los registros que están siendo calculados
+        float[][] ventana_intermedia = new float[tventana_intermedia][];
+        System.arraycopy(historia, 0, ventana_intermedia, 0, tventana_intermedia);
+
+        for (int i = tventana_intermedia, j = 0; i < thistoria; i++, j++) {
+            //Componemos la ventana que enviaremos a rellenar
+            float[][] ventana = new float[tventana][];
+
+            //Los primeros elementos son los de la ventana intermedia
+            System.arraycopy(ventana_intermedia, 0, ventana, 0, tventana_intermedia);
+
+            //La ventana que vamos a enviar se compone de toda la ventana_intermedia más el siguiente registro
+            //El último es el que añadimos que aún no ha empezado a ser calculado
+            ventana[tventana - 1] = historia[i];
+
+            //Enviamos la ventana a rellenar y recibimos la respuesta
+            float[][] ventanaRellena = this.evaluar_probabilidad(ventana, teoria);
+
+            //Normalizamos los valores de la ventanaRellena (para dejarlos en 0, 0.5 o 1)
+            if (normalizar) {
+                ventanaRellena = normalizar(ventanaRellena);
+            }
+
+            //Añadimos el primer registro a la historia que estamos componiendo
+            //ya que este registro ha sido totalmente calculado
+            historia_rellena[j] = ventanaRellena[0];
+
+            //Volvemos a componer la ventana intermedia
+            for (int vi = 0; vi < tventana_intermedia; vi++) {
+                ventana_intermedia[vi] = ventanaRellena[vi + 1];
+            }
+        }
+
+        return historia_rellena;
+    }
+
+    public String imprimir_historia(float[][] historia) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < historia.length; i++) {
+            sb.append(imprime_array(historia[i])).append('\n');
+        }
+
+        return sb.toString();
+    }
+
+    public float[][] normalizar(float[][] array) {
+        float[][] respuesta = new float[array.length][];
+
+        for (int i = 0; i < array.length; i++) {
+            respuesta[i] = new float[array[i].length];
+            for (int j = 0; j < array[i].length; j++) {
+                respuesta[i][j] = normalizar(array[i][j]);
+            }
+        }
+
+        return respuesta;
+    }
+    
+    public float[] normalizar(float[] array){
+        float[] respuesta = new float[array.length];
+        
+        for(int i=0; i<array.length; i++){
+            respuesta[i] = normalizar(array[i]);
+        }
+        
+        return respuesta;
+    }
+
+    /**
+     * Llevamos los valores a 0, 0.5 o 1 según su proximidad
+     *
+     * @param f
+     * @return
+     */
+    private float normalizar(float f) {
+        float r = 0f;
+        if (f > 0f) {
+            if (f < 0.25f) {
+                r = 0f;
+            } else if (f < 0.75f) {
+                r = 0.5f;
+            } else {
+                r = 1f;
+            }
+        }
+        return r;
+    }
+
+    ArrayList<Contradiccion> buscar_contradicciones(Teoria teoria) {
+        //Una contradicción es un caso en el que dos reglas comparten el antecedente y tienen consecuentes contradictorios
+        //normalmente la suma de sus confianzas estará cerca de 1
+        //dos consecuentes son contradictorios si la unión contiene una contradicción
+        ArrayList<Contradiccion> respuesta = new ArrayList<>();
+
+        //Recorremos las hipótesis que es donde puede haber contradicciones
+        ArrayList<Regla> hipotesis = teoria.getHipotesis();
+        //Primero ordenamos las hipótesis por antecedente para hacer grupos con el mismo antecedente
+        Collections.sort(hipotesis, new ComparaReglasPorAntecedente());
+
+        //Vamos recorriendo la lista y haciendo grupos
+
+        ComparaGruposOrdenandoElementos compG = new ComparaGruposOrdenandoElementos();
+
+        //Guardamos la regla actual
+        Regla r_nueva = null;
+        GrupoElementos nuevo = null; //Nuevo es el antecedente que comparte todo el grupo
+        float confianza_sumada = 0;
+        int iguales = 0;
+
+        ArrayList<Regla> grupo = new ArrayList<>();
+
+        D.d("Reglas ordenadas por antecedente y consecuente");
+        for (Regla r : hipotesis) {
+            D.d(r.toString());
+            //Extraemos el grupo de elementos del antecedente
+            GrupoElementos e = r.getAntecedente();
+            if (nuevo == null) {//Soy el primero, me asigno el turno
+                nuevo = e;
+                r_nueva = r;
+                iguales = 0;
+                confianza_sumada = (float) r.getConfianza();
+            } else {
+                GrupoElementos ge = r.getConsecuente();
+                GrupoElementos gn = r_nueva.getConsecuente();
+                //Si soy igual que el nuevo y si mi consecuente es del mismo tamaño que el del modelo 
+                //TODO no estoy seguro de que se esté haciendo bien, voy a ver cómo de productivas son las contradicciones pequeñas
+                //TODO Cambiar: De momento sólo nos fijaremos en las contradicciones con reglas con consecuente de tamaños iguales
+                if (compG.compare(e, nuevo) == 0
+                        && gn.getElementos().size() == ge.getElementos().size() //Alterar estas dos líneas 1 * para añadir las contradicciones de componentes grandes agrupadas por tamaños
+                        && r.getCantidad_de_informacion() == r_nueva.getCantidad_de_informacion()) {
+
+                    //Si mi consecuente contradice el del nuevo entonces me sumo al grupo
+                    if (r.getConsecuente().contradice(r_nueva.getConsecuente()) //&& gn.getElementos().size() == ge.getElementos().size() //Alterar estas dos líneas 2 * . comentar las dos para mezclarlas todas
+                            ) {
+                        grupo.add(r);
+                        iguales++;
+                        confianza_sumada += r.getConfianza();
+                    }
+
+                } else {
+                    //Si soy diferente del nuevo es que se han terminado sus iguales y comienzan los míos
+                    if (iguales > 0) {
+                        grupo.add(r_nueva);
+                        //Creamos la contradicción y la añadimos a la lista
+                        Contradiccion c = new Contradiccion();
+                        c.setReglas(grupo);
+                        c.setTotal_confianza(confianza_sumada);
+                        c.setAntecedente(nuevo);
+                        respuesta.add(c);
+                    } //Lo apunto si había más de uno
+                    nuevo = e; //Me asigno el turno
+                    r_nueva = r;
+                    iguales = 0; //Reinicio el contador de iguales
+                    grupo = new ArrayList<>();
+                    confianza_sumada = (float) r.getConfianza();
+                }
+            }
+        }
+
+        //Si había iguales en el último caso añadimos también el último
+        if (iguales > 0) {
+            grupo.add(r_nueva);
+            //Creamos la contradicción y la añadimos a la lista
+            Contradiccion c = new Contradiccion();
+            c.setReglas(grupo);
+            c.setTotal_confianza(confianza_sumada);
+            c.setAntecedente(nuevo);
+            respuesta.add(c);
+        }
+
+        return respuesta;
+    }
+
+    /**
+     * Reducimos la teoría eliminando todas aquellas hipótesis que comparten
+     * antecedente con una certeza pues ya no son hipótesis. No basta con que
+     * compartan el antecedente??
+     *
+     * @param teoria
+     * @return
+     */
+    Teoria reducir_teoria(Teoria teoria) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    /**
+     * Mejorar la teoría quiere decir añadir estados para eliminar
+     * contradicciones de las hipótesis.
+     *
+     * @param teoria
+     * @return
+     */
+    Teoria mejorar_teoria(Teoria teoria) {
+        throw new UnsupportedOperationException("Not yet implemented");
     }
 }

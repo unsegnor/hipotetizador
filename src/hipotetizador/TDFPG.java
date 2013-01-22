@@ -5,6 +5,7 @@
 package hipotetizador;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -17,13 +18,25 @@ import java.util.List;
  */
 public class TDFPG {
 
+    
+
+    
+    
     /**
      * Contiene el Elemento, su frecuencia y el puntero al primer nodo
      */
     //ArrayList<RegistroTD> tabla = new ArrayList< >();
     //Esta función espera la lista de elementos filtrados por soporte mínimo
     //VOY A DESCOMPONERLA!!
-    public ArrayList<Regla> extraer_reglas(ArrayList<InfoElemento> tabla_frecuencias, boolean[][] historia, int tventana) {
+    /**
+     * 
+     * @param tabla_frecuencias
+     * @param historia
+     * @param tventana
+     * @param generar_todas Si está a true indica que se generen también las subreglas
+     * @return 
+     */
+    public ArrayList<Regla> extraer_reglas(ArrayList<InfoElemento> tabla_frecuencias, boolean[][] historia, int tventana, boolean generar_todas) {
         ArrayList<Regla> reglas = new ArrayList<>();
 
         ArrayList<RegistroTD> tabla = inicializar_tabla(tabla_frecuencias);
@@ -125,14 +138,15 @@ public class TDFPG {
         //así calculamos la confianza de cada posible relación
         ArrayList<Regla> reglas_totales = new ArrayList<Regla>();
         
-  /*      // Esto es lo que elabora reglas sólo de los subgrupos frecuentes
+        if(!generar_todas){
+        // Esto es lo que elabora reglas sólo de los subgrupos frecuentes
         for (GrupoElementos g : grupos_frecuentes) {
             //Hacemos permutaciones de los subgrupos para generar reglas que después analizaremos
             ArrayList<Regla> reglas_de_g = this.generar_reglas(g);
             //TODO si pudiéramos reutilizar los subgrupos calculados y simplemente apuntarlos...
             reglas_totales.addAll(reglas_de_g);
-        }*/
-        
+        }
+        }
         //QUESTION ¿Se hace así? ¿Se conforman las reglas para todos los subgrupos de un grupo frecuente? ¿O sólo B = X-A? ¿Por qué? ¿Diferencias?...
         //En lugar de eso vamos a calcular las reglas a partir de los subgrupos de los grupos frecuentes
         
@@ -149,13 +163,13 @@ public class TDFPG {
             }
         }
         */
-        
+        if(generar_todas){
         //Vamos a generar las reglas a partir de los grupos con soporte directamente
         for(GrupoElementos g:soporte_de_grupos){
             //Para cada subgrupo posible sacamos las reglas que puede haber con él
             reglas_totales.addAll(this.generar_reglas(g));
         }
-
+        }
         //Ahora tenemos todas las reglas deducibles en reglas_totales
         //vamos a consultar el soporte de los grupos que las componen y a anotárselo
 // Sí que es necesario CREO QUE ESTO YA NO ES NECESARIO PORQUE ENLAZAMOS DIRECTAMENTE LAS REGLAS CON LOS GRUPOS
